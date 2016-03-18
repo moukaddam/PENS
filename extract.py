@@ -21,6 +21,32 @@ def gMatchError(fValue, fError):
     return str(fError)
   except ValueError:
     return fError
+    
+def gReturnB(fString):
+  # fString is in the format of e.g. E2=0.49 +13-18, this code strips out the value from
+  # error and returns an array of (value, upper error, lower error)
+  sVector = []
+  if fString[2] == "=":
+    sValue, sError = fString[3:].split(" ")
+    sVector.append(sValue)
+    if sError.strip()[0] == "+":
+      sMatch = re.search(r"[^a-zA-Z](-)[^a-zA-Z]", sError)
+      sVector.append(gMatchError(sValue, sError[1:sMatch.start(1)]))
+      sVector.append(gMatchError(sValue, sError[sMatch.start(1)+1:]))
+    else:
+      sVector.append(gMatchError(sValue, sError))
+      sVector.append(gMatchError(sValue, sError))
+  elif fString[2] == "<":
+    sVector.append(fString[3:])
+    sVector.append("0")
+    sVector.append(fString[3:])
+  elif fString[2] == ">":
+    sVector.append(fString[3:])
+    sVector.append("0")
+    sVector.append("0")
+  else:
+    print fString
+  return sVector
 
   
 fLvlEnergy = []
@@ -94,20 +120,33 @@ for fLine in fInput:
         sList.append(gMatchError(str(sLifeString[:-2].strip()), str(fLine[49:60].strip())))
       fLvlLifetime.append(sList)
   
+  sTrsEnergy = 0.0
+  sTrsID = "1"
   if fLine[5:8] == "  G":                 # Transition
     sTrsEnergy = float(fLine[9:18].strip())
     sFinEnergy = min(fLvlEnergy, key=lambda x:abs(x-(fLvlEnergy[-1] - sTrsEnergy))) # Find final state
     sIndex = fLvlEnergy.index(sFinEnergy)
     # Create transition ID
-    sID = "1" + fLvlSpin[-1] + fLvlParity[-1] + fLvlCount[-1] + fLvlSpin[sIndex] + fLvlParity[sIndex] + fLvlCount[sIndex]
+    sTrsID += fLvlSpin[-1] + fLvlParity[-1] + fLvlCount[-1] + fLvlSpin[sIndex] + fLvlParity[sIndex] + fLvlCount[sIndex]
 
+  sTrsBM1 = []
+  sTrsBE2 = []
   if fLine[5:8] == "B G":                 # B(.L) values
     sLine = fLine[9:].strip().translate(None, '()BW')
     try:                                  # Assumption is made that only 2, at most, B() values listed
       sOne, sTwo = sLine.split('$')
-      print sOne, sTwo
+      if sOne[:2] == "M1" and sTwo[:2] == "E2":
+        sTrsBM1 = gReturnB(sOne)
+        sTrsBE2 = gReturnB(sTwo)
+      elif sOne[:2] == "E2" and sTwo[:2] == "M1":
+        sTrsBE2 = gReturnB(sOne)
+        sTrsBM1 = gReturnB(sTwo)
     except ValueError:
-      print sLine
+      if sLine[:2] == "E2":
+        sTrsBE2 = gReturnB(sLine)
+      elif sLine[:2] == "M1":
+        sTrsBM1 = gReturnB(sLine)
+
 
 fInput.close()
 
