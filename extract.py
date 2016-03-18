@@ -40,7 +40,7 @@ def gReturnB(fString):
     sVector.append(fString[3:])
     sVector.append("0")
     sVector.append(fString[3:])
-  elif fString[2] == ">":
+  elif fString[2] == ">" or fString[3:5] == "AP": #Approximately
     sVector.append(fString[3:])
     sVector.append("0")
     sVector.append("0")
@@ -57,7 +57,8 @@ fLvlParity = []
 fLvlLifetime = []
 
 # Open the file, get the mass and proton number  
-fInput = open('data/62_28.dat','r')
+fInput = open('data/60_28.dat','r')
+fOutput = open('collate.dat', 'w') # TODO Change to append after testing
 nucMass = int(fInput.read(3))
 nucName = fInput.read(2)
 nucProton = gReturnProton(nucName)
@@ -68,6 +69,12 @@ for fLine in fInput:
     break
   if fLine[6] == "c" or fLine[5] == "X":
     continue                              # Skip comments and cross-references
+  sTrsBM1 = []
+  sTrsBE2 = []
+  sTrsMixing = []
+  sTrsEnergy = 0.0
+  sTrsID = "1"
+
   if fLine[5:8] == "  L":                 # Energy level
     fLvlEnergy.append(float(fLine[9:18])) # Energy, omitting error (error will be in gamma)
     sSpin = fLine[21:25].strip()
@@ -96,11 +103,14 @@ for fLine in fInput:
       sLifeString = fLine[39:49].strip()   
       if sLifeString[-2:] == "PS":         # PS
         sList.append(str(sLifeString[:-2].strip()))
+      elif sLifeString[-2:] == "FS":       # FS
+        sList.append(str(float(sLifeString[:-2].strip()) * 0.001))
       elif not sLifeString:                # (BLANK)
         sLifetime = ["0", "0", "0"]
         fLvlLifetime.append(sLifetime)
         continue
       else:
+        print sLifeString
         print "ATTN: UNKNOWN LIFETIME UNIT"
         break
         
@@ -120,18 +130,19 @@ for fLine in fInput:
         sList.append(gMatchError(str(sLifeString[:-2].strip()), str(fLine[49:60].strip())))
       fLvlLifetime.append(sList)
   
-  sTrsEnergy = 0.0
-  sTrsID = "1"
-  if fLine[5:8] == "  G":                 # Transition
+  elif fLine[5:8] == "  G":                 # Transition
     sTrsEnergy = float(fLine[9:18].strip())
     sFinEnergy = min(fLvlEnergy, key=lambda x:abs(x-(fLvlEnergy[-1] - sTrsEnergy))) # Find final state
     sIndex = fLvlEnergy.index(sFinEnergy)
     # Create transition ID
     sTrsID += fLvlSpin[-1] + fLvlParity[-1] + fLvlCount[-1] + fLvlSpin[sIndex] + fLvlParity[sIndex] + fLvlCount[sIndex]
+    
+    if fLine[42:55].strip():                # If there's a mixing ratio....
+      sStr = "XX="+re.sub(' +',' ',fLine[42:55].strip())
+      sTrsMixing = gReturnB(sStr)
 
-  sTrsBM1 = []
-  sTrsBE2 = []
-  if fLine[5:8] == "B G":                 # B(.L) values
+
+  elif fLine[5:8] == "B G":                 # B(.L) values
     sLine = fLine[9:].strip().translate(None, '()BW')
     try:                                  # Assumption is made that only 2, at most, B() values listed
       sOne, sTwo = sLine.split('$')
@@ -146,15 +157,13 @@ for fLine in fInput:
         sTrsBE2 = gReturnB(sLine)
       elif sLine[:2] == "M1":
         sTrsBM1 = gReturnB(sLine)
-
+        
+  fOutput.write(str(nucMass) + " " + str(nucProton) + " " + str(nucMass-nucProton))
 
 fInput.close()
 
-#for i in range(0, len(fLvlEnergy)-1):
-#  if not fLvlLifetime[i][0] == "0":
-#    print str(fLvlEnergy[i]) + "\t" + fLvlSpin[i] + fLvlParity[i] + "\t" + str(fLvlLifetime[i][0]) + " +" + str(fLvlLifetime[i][1]) + " -" + str(fLvlLifetime[i][2])
 
-fOutput = open('collate.dat', 'w')
-fOutput.write(str(nucMass) + " " + str(nucProton) + " " + str(nucMass-nucProton))
+
+
 
 
