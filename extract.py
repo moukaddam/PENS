@@ -1,6 +1,4 @@
-import re
-import math
-import os  
+import re, math, os, csv
 
 def gReturnProton(fName):
   return {
@@ -63,6 +61,13 @@ def gReturnB(fString):
   else:
     print fString
   return sVector
+  
+# Open up the 'overwrite' file, save contents to arrays
+fOverwrite = []
+with open('overwrite.csv', 'rb') as fInput:
+  sReader = csv.reader(fInput)
+  fOverwrite = list(sReader)
+fInput.close()
 
 fNull = ["0.0", "0.0", "0.0"]
 
@@ -88,7 +93,7 @@ for i in os.listdir(os.getcwd() + "/data"):
   nucName = fInput.read(2)
   nucProton = gReturnProton(nucName)
   
-  print "Reading in " + str(nucMass) + nucName
+  #print "Reading in " + str(nucMass) + nucName
  
   sTrsBM1 = []
   sTrsBE2 = []
@@ -225,7 +230,7 @@ for i in os.listdir(os.getcwd() + "/data"):
           
   fInput.close()
   
-  print " Read in", len(fLvlEnergy), "energy levels and", len(fTrsID), "transitions"
+  #print " Read in", len(fLvlEnergy), "energy levels and", len(fTrsID), "transitions"
 
   # This chunk will find the energy of ..
   fEneS0 = "0.0"
@@ -257,15 +262,55 @@ for i in os.listdir(os.getcwd() + "/data"):
   except:
     fEneS2 = "0.0"
   
+ 
+  fBeta = []
+  fOverList = []
+  for row, i in enumerate(fOverwrite):
+    if i[0] == str(nucMass) and i[1] == str(nucProton):
+      fBeta = [fOverwrite[row][3], fOverwrite[row][4], fOverwrite[row][5], fOverwrite[row][6]]
+      fOverList.append(row)
+ 
   # Write to file
   for i in range(0, len(fTrsID)):
+    # Find the nucleus
+    sQSq = [0.0, 0.0]
+    sRho = [0.0, 0.0, 0.0]
+    sX = [0.0, 0.0]
+
+    for j in range(len(fOverList)):
+      if fOverwrite[fOverList[j]][7] == fTrsID[i]:
+        if fOverwrite[fOverList[j]][8] != 0:
+          fTrsBE2[i] = [fOverwrite[fOverList[j]][8], fOverwrite[fOverList[j]][9], fOverwrite[fOverList[j]][10]]
+        sQSq = [fOverwrite[fOverList[j]][11], fOverwrite[fOverList[j]][12]]
+        sRho = [fOverwrite[fOverList[j]][13], fOverwrite[fOverList[j]][14], fOverwrite[fOverList[j]][15]]
+        sX = [fOverwrite[fOverList[j]][16], fOverwrite[fOverList[j]][17]]
+        fOverList.pop(j)
+        break
+  
     fOutput.write(str(nucMass) + " " + str(nucProton) + " " + str(nucMass-nucProton))
-    # TODO Add energy levels
+    fOutput.write(" " + fBeta[0] + " " + fBeta[1] + " " + fBeta[2] + " " + fBeta[3])
     fOutput.write(" " + fEneS0 + " " + fEneF2 + " " + fEneF4 + " " + fEneS2)
     fOutput.write(" " + fTrsID[i] + " " + fTrsEnergy[i])
     fOutput.write(" " + fTrsBE2[i][0] + " " + fTrsBE2[i][1] + " " + fTrsBE2[i][2])
     fOutput.write(" " + fTrsBM1[i][0] + " " + fTrsBM1[i][1] + " " + fTrsBM1[i][2])
     fOutput.write(" " + fTrsMixing[i][0] + " " + fTrsMixing[i][1] + " " + fTrsMixing[i][2])
+    fOutput.write(" " + str(sQSq[0]) + " " + str(sQSq[1]))
+    fOutput.write(" " + str(sRho[0]) + " " + str(sRho[1]) + " " + str(sRho[2]))
+    fOutput.write(" " + str(sX[0]) + " " + str(sX[1]))
     fOutput.write("\n")
 
-
+  # Write any transitions left in 'overwrite'
+  for i in range(0, len(fOverList)):
+    fOutput.write(str(nucMass) + " " + str(nucProton) + " " + str(nucMass-nucProton))
+    fOutput.write(" " + fBeta[0] + " " + fBeta[1] + " " + fBeta[2] + " " + fBeta[3])
+    fOutput.write(" " + fEneS0 + " " + fEneF2 + " " + fEneF4 + " " + fEneS2)
+    fOutput.write(" " + fOverwrite[fOverList[i]][7] + " 0.0") # Transition energy is missing, may be able to calculate
+    fOutput.write(" " + fOverwrite[fOverList[i]][8] + " " + fOverwrite[fOverList[i]][9] + " " + fOverwrite[fOverList[i]][10])
+    fOutput.write(" 0.0 0.0 0.0")
+    fOutput.write(" 0.0 0.0 0.0")
+    fOutput.write(" " + fOverwrite[fOverList[i]][11] + " " + fOverwrite[fOverList[i]][12])
+    fOutput.write(" " + fOverwrite[fOverList[i]][13] + " " + fOverwrite[fOverList[i]][14] + " " + fOverwrite[fOverList[i]][15])
+    fOutput.write(" " + fOverwrite[fOverList[i]][16] + " " + fOverwrite[fOverList[i]][17])
+    fOutput.write("\n")
+  
+  
