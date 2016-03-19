@@ -4,8 +4,13 @@ import os
 
 def gReturnProton(fName):
   return {
-    'NI': 28,
-  }.get(fName, "000")
+    'HE': 2, 'BE': 4, 'C': 6, 'O': 8, 'NE': 10, 'MG': 12, 'SI': 14, 'S': 16, 'AR': 18,
+    'CA': 20, 'TI': 22, 'CR': 24, 'FE': 26, 'NI': 28, 'ZN': 30, 'GE': 32, 'SE': 34,
+    'KR': 36, 'SR': 38, 'ZR': 40, 'MO': 42, 'RU': 44, 'PD': 46, 'CD': 48, 'SN': 50,
+    'TE': 52, 'XE': 54, 'BA': 56, 'CE': 58, 'ND': 60, 'SM': 62, 'GD': 64, 'DY': 66,
+    'ER': 68, 'YB': 70, 'HF': 72,  'W': 74, 'OS': 76, 'PT': 78, 'HG': 80, 'PB': 82,
+    'PO': 84, 'RN': 86, 'RA': 88, 'TH': 90,  'U': 92, 'PU': 94, 'CM': 96, 'CF': 98
+  }.get(fName, "00")
   
 def gCheckNumber(fChar):
   try:
@@ -69,7 +74,7 @@ for i in os.listdir(os.getcwd() + "/data"):
   fLvlSpin = []
   fLvlCount = []
   fLvlParity = []
-  fLvlLifetime = []
+  fLvlHalflife = []
 
   fTrsBM1 = []
   fTrsBE2 = []
@@ -102,7 +107,7 @@ for i in os.listdir(os.getcwd() + "/data"):
       fLvlEnergy.append(float(fLine[9:18])) # Energy, omitting error (error will be in gamma)
       sSpin = fLine[21:25].strip()
 
-      if len(sSpin) == 2:
+      if len(sSpin) == 2 and gCheckNumber(sSpin[0]):
         fLvlSpPa.append(sSpin)
         fLvlSpin.append(sSpin[0])           # Spin
         if sSpin[1] == "+":                 # Parity (+ = 1, - = 0)
@@ -122,23 +127,29 @@ for i in os.listdir(os.getcwd() + "/data"):
         fLvlParity.append("x")
         fLvlCount.append("x")
       
-      sList = []                            # Lifetime
+      sList = []                            # Halflife
       if float(fLine[9:18]) == 0.0:         # (STABLE)
-        sLifetime = ["0", "0", "0"]
-        fLvlLifetime.append(sLifetime)
+        sHalflife = ["0", "0", "0"]
+        fLvlHalflife.append(sHalflife)
       else:
         sLifeString = fLine[39:49].strip()   
         if sLifeString[-2:] == "PS":         # PS
           sList.append(str(sLifeString[:-2].strip()))
         elif sLifeString[-2:] == "FS":       # FS
           sList.append(str(float(sLifeString[:-2].strip()) * 0.001))
+        elif sLifeString[-2:] == "NS":       # NS
+          sList.append(str(float(sLifeString[:-2].strip()) * 1000.))
+        elif sLifeString[-2:] == "US":       # US
+          sList.append(str(float(sLifeString[:-2].strip()) * 1.0E6))
+        elif sLifeString[-2:] == "MS":       # MS
+          sList.append(str(float(sLifeString[:-2].strip()) * 1.0E9))
         elif not sLifeString:                # (BLANK)
-          sLifetime = ["0", "0", "0"]
-          fLvlLifetime.append(sLifetime)
+          sHalflife = ["0", "0", "0"]
+          fLvlHalflife.append(sHalflife)
           continue
         else:
           print sLifeString
-          print "ATTN: UNKNOWN LIFETIME UNIT"
+          print "ATTN: UNKNOWN HALF-LIFE UNIT"
           break
           
         if fLine[49] == "+":                # Error (+/-)
@@ -157,7 +168,7 @@ for i in os.listdir(os.getcwd() + "/data"):
           sUpper, sLower = gMatchError(str(sLifeString[:-2].strip()), str(fLine[49:60].strip()), str(fLine[49:60].strip()))
           sList.append(sUpper)
           sList.append(sLower)
-        fLvlLifetime.append(sList)
+        fLvlHalflife.append(sList)
     
     elif fLine[5:8] == "  G":                 # Transition
     
@@ -216,28 +227,41 @@ for i in os.listdir(os.getcwd() + "/data"):
   
   print " Read in", len(fLvlEnergy), "energy levels and", len(fTrsID), "transitions"
 
-  # This chunk will find the energy of the second 0+..
+  # This chunk will find the energy of ..
+  fEneS0 = "0.0"
+  fEneF2 = "0.0"
+  fEneF4 = "0.0"
+  fEneS2 = "0.0"
   inSec0 = -1
-  for j in xrange(2):
-    inSec0 = fLvlSpPa.index("0+", inSec0 + 1)
-  # .. the first 2+..
-  inFir2 = -1
-  for j in xrange(1):
-    inFir2 = fLvlSpPa.index("2+", inFir2 + 1)
-  # .. the first 4+..
-  inFir4 = -1
-  for j in xrange(1):
-    inFir4 = fLvlSpPa.index("4+", inFir4 + 1)
-  # .. the second 2+
+  try:
+    for j in xrange(2):           # .. the second 0+
+      inSec0 = fLvlSpPa.index("0+", inSec0 + 1)
+    fEneS0 = str(fLvlEnergy[inSec0])
+  except ValueError:
+    fEneS0 = "0.0"
+  try:
+    inFir2 = fLvlSpPa.index("2+") # .. the first 2+
+    fEneF2 = str(fLvlEnergy[inFir2])
+  except ValueError:
+    fEneF2 = "0.0"
+  try:
+    inFir4 = fLvlSpPa.index("4+") # .. the first 4+
+    fEneF4 = str(fLvlEnergy[inFir4])
+  except ValueError:
+    fEneF4 = "0.0"
   inSec2 = -1
-  for j in xrange(2):
-    inSec2 = fLvlSpPa.index("2+", inSec2 + 1)
+  try:
+    for j in xrange(2):           # .. the second 2+
+      inSec2 = fLvlSpPa.index("2+", inSec2 + 1)
+      fEneS2 = str(fLvlEnergy[inSec2])
+  except:
+    fEneS2 = "0.0"
   
   # Write to file
   for i in range(0, len(fTrsID)):
     fOutput.write(str(nucMass) + " " + str(nucProton) + " " + str(nucMass-nucProton))
     # TODO Add energy levels
-    fOutput.write(" " + str(fLvlEnergy[inSec0]) + " " + str(fLvlEnergy[inFir2]) + " " + str(fLvlEnergy[inFir4]) + " " + str(fLvlEnergy[inSec2]))
+    fOutput.write(" " + fEneS0 + " " + fEneF2 + " " + fEneF4 + " " + fEneS2)
     fOutput.write(" " + fTrsID[i] + " " + fTrsEnergy[i])
     fOutput.write(" " + fTrsBE2[i][0] + " " + fTrsBE2[i][1] + " " + fTrsBE2[i][2])
     fOutput.write(" " + fTrsBM1[i][0] + " " + fTrsBM1[i][1] + " " + fTrsBM1[i][2])
