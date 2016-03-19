@@ -9,6 +9,11 @@ def gReturnProton(fName):
     'ER': 68, 'YB': 70, 'HF': 72,  'W': 74, 'OS': 76, 'PT': 78, 'HG': 80, 'PB': 82,
     'PO': 84, 'RN': 86, 'RA': 88, 'TH': 90,  'U': 92, 'PU': 94, 'CM': 96, 'CF': 98
   }.get(fName, "00")
+         
+def gReturnTime(fUnit):
+  return {
+    'PS': 1.0, 'FS': 0.001, 'NS': 1000., 'US': 1.0E6, 'MS': 1.0E9, 'M': 6.0E13, 'S': 1.0E12, 'H': 3.6E15
+  }.get(fUnit, "??")
   
 def gCheckNumber(fChar):
   try:
@@ -55,7 +60,7 @@ def gReturnB(fString):
       sVector.append(fString[3:])
       sVector.append("0")
       sVector.append("0")
-  elif fString[2] == "<" or fString[3:5] == "LT":
+  elif fString[2] == "<" or fString[3:5] == "LT" or fString[3:5] == "LE":
     sVector.append(fString[3:])
     sVector.append("0")
     sVector.append(fString[3:])
@@ -96,9 +101,9 @@ for i in os.listdir(os.getcwd() + "/data"):
   fInput = open("data/" + i,'r')
   nucMass = int(fInput.read(3))
   nucName = fInput.read(2)
-  nucProton = gReturnProton(nucName)
+  nucProton = gReturnProton(nucName.strip())
   
-  print "Reading in " + str(nucMass) + nucName
+  #print "Reading in " + str(nucMass) + nucName
  
   sTrsBM1 = []
   sTrsBE2 = []
@@ -117,7 +122,7 @@ for i in os.listdir(os.getcwd() + "/data"):
       continue                              # Skip everything that isn't energy level, transition, transition details
 
     if fLine[5:8] == "  L":                 # Energy level 
-      if "+X" in fLine[9:19]:               # .. skipping the +X levels
+      if "X" in fLine[9:19] or "Y" in fLine[9:19]:       # .. skipping the +X levels
         continue
       
       fLvlEnergy.append(float(fLine[9:19])) # Energy, omitting error (error will be in gamma)
@@ -150,19 +155,11 @@ for i in os.listdir(os.getcwd() + "/data"):
         fLvlHalflife.append(sHalflife)
       else:
         sLifeString = fLine[39:49].strip()   
-        if sLifeString[-2:] == "PS":         # PS
-          sList.append(str(sLifeString[:-2].strip()))
-        elif sLifeString[-2:] == "FS":       # FS
-          sList.append(str(float(sLifeString[:-2].strip()) * 0.001))
-        elif sLifeString[-2:] == "NS":       # NS
-          sList.append(str(float(sLifeString[:-2].strip()) * 1000.))
-        elif sLifeString[-2:] == "US":       # US
-          sList.append(str(float(sLifeString[:-2].strip()) * 1.0E6))
-        elif sLifeString[-2:] == "MS":       # MS
-          sList.append(str(float(sLifeString[:-2].strip()) * 1.0E9))
-        elif sLifeString[-2:] == "M":        # Mins
-          sList.append(str(float(sLifeString[:-2].strip()) * 6.0E13))
-        elif not sLifeString or sLifeString[-2:] == "EV":    # (BLANK)
+
+        sUnit = gReturnTime(sLifeString[-2:].strip())
+        if sUnit != "??":
+          sList.append(str(float(sLifeString[:-2].strip()) * sUnit))
+        elif not sLifeString or sLifeString[-2:] == "EV" or "?" in sLifeString[-2:]:    # (BLANK)
           sHalflife = ["0", "0", "0"]
           fLvlHalflife.append(sHalflife)
           continue
@@ -190,6 +187,9 @@ for i in os.listdir(os.getcwd() + "/data"):
         fLvlHalflife.append(sList)
     
     elif fLine[5:8] == "  G" and fGroundRead:           # Transition
+    
+      if "X" in fLine[9:18] or "Y" in fLine[9:18]:
+        continue
     
       # Encountering a new transition, write to vector the previous one
       if sTrsEnergy != 0:
