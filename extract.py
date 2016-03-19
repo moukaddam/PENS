@@ -1,4 +1,4 @@
-import re, math, os, csv
+import re, math, os, csv, requests, urllib2
 
 def gReturnProton(fName):
   return {
@@ -72,12 +72,10 @@ def gReturnB(fString):
     print fString
   return sVector
   
-# Open up the 'overwrite' file, save contents to arrays
-fOverwrite = []
-with open('overwrite.csv', 'rb') as fInput:
-  sReader = csv.reader(fInput)
-  fOverwrite = list(sReader)
-fInput.close()
+fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
+fInput = urllib2.urlopen(fCSVURL)
+fReader = csv.reader(fInput)
+fOverwrite = list(fReader)
 
 fNull = ["0.0", "0.0", "0.0"]
 
@@ -96,6 +94,7 @@ for i in os.listdir(os.getcwd() + "/data"):
   fTrsMixing = []
   fTrsEnergy = []
   fTrsID = []
+  fTrsLife = []
 
   # Open the file, get the mass and proton number  
   fInput = open("data/" + i,'r')
@@ -195,6 +194,10 @@ for i in os.listdir(os.getcwd() + "/data"):
       if sTrsEnergy != 0:
         fTrsID.append(sTrsID)
         fTrsEnergy.append(str(sTrsEnergy))
+        if sTrsLife:
+          fTrsLife.append(sTrsLife)
+        else:
+          fTrsLife.append(fNull)
         if sTrsBE2:
           fTrsBE2.append(sTrsBE2)
         else:
@@ -212,6 +215,7 @@ for i in os.listdir(os.getcwd() + "/data"):
       sTrsBM1 = []
       sTrsBE2 = []
       sTrsMixing = []
+      sTrsLife = []
       sTrsEnergy = 0.0
       sTrsID = "1"
        
@@ -219,6 +223,7 @@ for i in os.listdir(os.getcwd() + "/data"):
       sFinEnergy = min(fLvlEnergy, key=lambda x:abs(x-(fLvlEnergy[-1] - sTrsEnergy))) # Find final state
       sIndex = fLvlEnergy.index(sFinEnergy)
       # Create transition ID
+      sTrsLife = fLvlHalflife[len(fLvlEnergy)-1]
       sTrsID = "1" + fLvlSpin[-1] + fLvlParity[-1] + fLvlCount[-1] + fLvlSpin[sIndex] + fLvlParity[sIndex] + fLvlCount[sIndex]
       
       if fLine[41:55].strip():                # If there's a mixing ratio....
@@ -305,6 +310,7 @@ for i in os.listdir(os.getcwd() + "/data"):
     fOutput.write(" " + fBeta[0] + " " + fBeta[1] + " " + fBeta[2] + " " + fBeta[3])
     fOutput.write(" " + fEneS0 + " " + fEneF2 + " " + fEneF4 + " " + fEneS2)
     fOutput.write(" " + fTrsID[i] + " " + fTrsEnergy[i])
+    fOutput.write(" " + fTrsLife[i][0] + " " + fTrsLife[i][1] + " " + fTrsLife[i][2])
     fOutput.write(" " + fTrsBE2[i][0] + " " + fTrsBE2[i][1] + " " + fTrsBE2[i][2])
     fOutput.write(" " + fTrsBM1[i][0] + " " + fTrsBM1[i][1] + " " + fTrsBM1[i][2])
     fOutput.write(" " + fTrsMixing[i][0] + " " + fTrsMixing[i][1] + " " + fTrsMixing[i][2])
@@ -319,6 +325,7 @@ for i in os.listdir(os.getcwd() + "/data"):
     fOutput.write(" " + fBeta[0] + " " + fBeta[1] + " " + fBeta[2] + " " + fBeta[3])
     fOutput.write(" " + fEneS0 + " " + fEneF2 + " " + fEneF4 + " " + fEneS2)
     fOutput.write(" " + fOverwrite[fOverList[i]][7] + " 0.0") # Transition energy is missing, may be able to calculate
+    fOutput.write(" 0.0 0.0 0.0")
     fOutput.write(" " + fOverwrite[fOverList[i]][8] + " " + fOverwrite[fOverList[i]][9] + " " + fOverwrite[fOverList[i]][10])
     fOutput.write(" 0.0 0.0 0.0")
     fOutput.write(" 0.0 0.0 0.0")
