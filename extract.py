@@ -39,22 +39,27 @@ def gReturnB(fString):
   # error and returns an array of (value, upper error, lower error)
   sVector = []
   if fString[2] == "=":
-    sValue, sError = fString[3:].split(" ")
-    sVector.append(sValue)
-    if sError.strip()[0] == "+":
-      sMatch = re.search(r"[^a-zA-Z](-)[^a-zA-Z]", sError)
-      sUpper, sLower = gMatchError(sValue, sError[1:sMatch.start(1)], sError[sMatch.start(1)+1:])
-      sVector.append(sUpper)
-      sVector.append(sLower)
-    else:
-      sUpper, sLower = gMatchError(sValue, sError, sError)
-      sVector.append(sUpper)
-      sVector.append(sLower)
-  elif fString[2] == "<":
+    try:
+      sValue, sError = fString[3:].strip().split(" ")
+      sVector.append(sValue)
+      if sError.strip()[0] == "+":
+        sMatch = re.search(r"[^a-zA-Z](-)[^a-zA-Z]", sError)
+        sUpper, sLower = gMatchError(sValue, sError[1:sMatch.start(1)], sError[sMatch.start(1)+1:])
+        sVector.append(sUpper)
+        sVector.append(sLower)
+      else:
+        sUpper, sLower = gMatchError(sValue, sError, sError)
+        sVector.append(sUpper)
+        sVector.append(sLower)
+    except ValueError:
+      sVector.append(fString[3:])
+      sVector.append("0")
+      sVector.append("0")
+  elif fString[2] == "<" or fString[3:5] == "LT":
     sVector.append(fString[3:])
     sVector.append("0")
     sVector.append(fString[3:])
-  elif fString[2] == ">" or fString[3:5] == "AP": #Approximately
+  elif fString[2] == ">" or fString[3:5] == "GE" or fString[3:5] == "GT" or fString[3:5] == "AP": #Approximately
     sVector.append(fString[6:])
     sVector.append("0")
     sVector.append("0")
@@ -93,23 +98,30 @@ for i in os.listdir(os.getcwd() + "/data"):
   nucName = fInput.read(2)
   nucProton = gReturnProton(nucName)
   
-  #print "Reading in " + str(nucMass) + nucName
+  print "Reading in " + str(nucMass) + nucName
  
   sTrsBM1 = []
   sTrsBE2 = []
   sTrsMixing = []
   sTrsEnergy = 0.0
   sTrsID = "1"
+  
+  fGroundRead = False
 
   # Read through each line in the file, firstly looking for energy levels
   for fLine in fInput:
+    
     if len(fLvlEnergy) == 20:               # Limit of the first x energy levels
       break
     if fLine[5:8] != "  L" and fLine[5:8] != "  G" and fLine[5:8] != "B G":
       continue                              # Skip everything that isn't energy level, transition, transition details
 
     if fLine[5:8] == "  L":                 # Energy level 
-      fLvlEnergy.append(float(fLine[9:18])) # Energy, omitting error (error will be in gamma)
+      if "+X" in fLine[9:19]:               # .. skipping the +X levels
+        continue
+      
+      fLvlEnergy.append(float(fLine[9:19])) # Energy, omitting error (error will be in gamma)
+      fGroundRead = True
       sSpin = fLine[21:25].strip()
 
       if len(sSpin) == 2 and gCheckNumber(sSpin[0]):
@@ -148,13 +160,15 @@ for i in os.listdir(os.getcwd() + "/data"):
           sList.append(str(float(sLifeString[:-2].strip()) * 1.0E6))
         elif sLifeString[-2:] == "MS":       # MS
           sList.append(str(float(sLifeString[:-2].strip()) * 1.0E9))
-        elif not sLifeString:                # (BLANK)
+        elif sLifeString[-2:] == "M":        # Mins
+          sList.append(str(float(sLifeString[:-2].strip()) * 6.0E13))
+        elif not sLifeString or sLifeString[-2:] == "EV":    # (BLANK)
           sHalflife = ["0", "0", "0"]
           fLvlHalflife.append(sHalflife)
           continue
         else:
           print sLifeString
-          print "ATTN: UNKNOWN HALF-LIFE UNIT"
+          print "ATTN: UNKNOWN HALF-LIFE UNIT", sLifeString[-2:]
           break
           
         if fLine[49] == "+":                # Error (+/-)
@@ -175,7 +189,7 @@ for i in os.listdir(os.getcwd() + "/data"):
           sList.append(sLower)
         fLvlHalflife.append(sList)
     
-    elif fLine[5:8] == "  G":                 # Transition
+    elif fLine[5:8] == "  G" and fGroundRead:           # Transition
     
       # Encountering a new transition, write to vector the previous one
       if sTrsEnergy != 0:
@@ -207,8 +221,8 @@ for i in os.listdir(os.getcwd() + "/data"):
       # Create transition ID
       sTrsID = "1" + fLvlSpin[-1] + fLvlParity[-1] + fLvlCount[-1] + fLvlSpin[sIndex] + fLvlParity[sIndex] + fLvlCount[sIndex]
       
-      if fLine[42:55].strip():                # If there's a mixing ratio....
-        sStr = "XX="+re.sub(' +',' ',fLine[42:55].strip())
+      if fLine[41:55].strip():                # If there's a mixing ratio....
+        sStr = "XX="+re.sub(' +',' ',fLine[41:55].strip())
         sTrsMixing = gReturnB(sStr)
 
 
@@ -263,7 +277,7 @@ for i in os.listdir(os.getcwd() + "/data"):
     fEneS2 = "0.0"
   
  
-  fBeta = []
+  fBeta = ["0.0", "0.0", "0.0", "0.0"]
   fOverList = []
   for row, i in enumerate(fOverwrite):
     if i[0] == str(nucMass) and i[1] == str(nucProton):
