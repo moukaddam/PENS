@@ -13,24 +13,11 @@ using namespace std;
 
 bool gDEBUG = true;
 
-/* The options are as follows:
-Nuclear:
-  Mass - nMass, Proton Number - nProton, Neutron Number - nNeutron, Q - nQuadrupole, Beta - nDeformation, 
-  Energy (2nd 0+) - nEnergy0n2, Energy (1st 2+) - nEnergy2n1, Energy (1st 4+) - nEnergy4n1, Energy (2nd 2+) - nEnergy2n2;
-Transitions:
-  Transition ID - transID [A 5 digit number 1 Ji ni Jf nf e.g. the 2nd 2+ to 1st 2+ is 12221],
-  Parent Lifetime [ps] - transLifetime, B(E2) [W.u.] - transBE2, B(M1) [W.u.] - transBM1, 
-  Mixing Ratio - transMix, q^2 - transq2, Rho^2 - transRho, X - transX;
-*/
-string userX = "nDeformation"; // x-axis
-string userY = "transRho"; // y-axis
-string userCondition = "transID"; // condition... bit complicated to implement this
-
 string GetName(string name);
-int plotRoot() {
+int plotRoot(string userX="nMass", string userY="transBE2", string userCondition="transID") {
 
   // Open file
-  TFile *fFile = TFile::Open("paperExtract.root");
+  TFile *fFile = TFile::Open("pensExtract.root");
   TTreeReader fReader("T", fFile);
   
   vector <Double_t> fX, fXU, fXL, fY, fYU, fYL;
@@ -39,14 +26,14 @@ int plotRoot() {
   // For properties with error, the second number is upper error, the third number is lower error
   TTreeReaderValue< vector<Double_t> > fXValue(fReader, userX.c_str());
   TTreeReaderValue< vector<Double_t> > fYValue(fReader, userY.c_str());
-  TTreeReaderValue< vector<Double_t> > fCond(fReader, userCondition.c_str());
+  TTreeReaderValue< vector<string> > fCond(fReader, userCondition.c_str());
   // .. loop through entries in tree, adding to vectors
   int fCounter = 1;
   if (gDEBUG) cout << Form("Line\t\t%s\t\t%s\n", GetName(userX).c_str(), GetName(userY).c_str());
   while (fReader.Next()) {
     Double_t sX = fXValue->at(0);
     Double_t sY = fYValue->at(0);
-    if (sX != 0 && sY != 0 && fCond->at(0) == 12221) { //  This is where you would add additional limits e.g. && fCond->at(0) == 12221
+    if (sX != 0 && sY != 0 && fCond->at(0) == "1211011") { //  This is where you would add additional limits e.g. && fCond->at(0) == 12221
       if (gDEBUG) cout << fCounter << "\t\t" << sX << " " << "\t\t" << sY << endl;
       fX.push_back(sX);
       if (fXValue->size() > 1) {

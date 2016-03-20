@@ -31,12 +31,16 @@ def gFindIter(fString, fSub, fN):
   return fStart
     
 def gMatchError(fValue, fUpper, fLower):
+  fPrecision = 0
   if "E" in fValue:                                   # Sometimes B() values are in exponent format
     fFront, fExponent = fValue.split("E")
-    if len(fUpper) > 1 or len(fLower) > 1:
-      sDiv = len(str(max(int(fUpper), int(fLower))))  # Biggest value
-      fUpper = str(float(fUpper) / 10**(sDiv-1)) 
-      fLower = str(float(fLower) / 10**(sDiv-1)) 
+    if "." in fFront:
+      fMain, fFraction = fFront.split('.')
+      fPrecision = len(fFraction)
+    else:
+      fPrecision = 0
+    fUpper = str(float(fUpper) / 10**fPrecision)
+    fLower = str(float(fLower) / 10**fPrecision)
     return (fUpper + "E" + fExponent, fLower + "E" + fExponent)
   try:
     fMain, fFraction = fValue.split('.')
@@ -88,11 +92,10 @@ def gReturnB(fString):
     print fString
   return sVector
   
-#fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
-#fInput = urllib2.urlopen(fCSVURL)
-#fReader = csv.reader(fInput)
-#fOverwrite = list(fReader)
-fOverwrite = []
+fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
+fInput = urllib2.urlopen(fCSVURL)
+fReader = csv.reader(fInput)
+fOverwrite = list(fReader)
 
 fNull = ["0.0", "0.0", "0.0"]
 
@@ -258,8 +261,6 @@ for i in os.listdir(os.getcwd() + "/data"):
           sStr = "XX="+re.sub(' +',' ',fLine[41:55].strip()[:-2])
         else:
           sStr = "XX="+re.sub(' +',' ',fLine[41:55].replace("+", " +").replace(" -", "-").strip()) # Gets rid of extra spaces
-        if nucMass==238 and nucProton==94:
-          print sStr
         sTrsMixing = gReturnB(sStr)
 
 

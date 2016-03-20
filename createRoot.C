@@ -102,7 +102,7 @@ int createRoot() {
   double inX, inXe;
   
   // Create root file and tree
-  TFile fRootFile("paperExtract.root","RECREATE");
+  TFile fRootFile("pensExtract.root","RECREATE");
   TTree *fRootTree = new TTree("T","Nuclear Systematics");
   // .. and create a new branch for each data member of event object
   Int_t fSplit = 1; // multi-branch -- what?
@@ -126,7 +126,7 @@ int createRoot() {
 
     if (inFile.eof()) break;
     
-    //cout << fCounter << "\t" << inA << "\t" << inZ << "\t" << inTransID  << endl; //"\t" << inRho << endl;
+    cout << fCounter << "\t" << inA << "\t" << inZ << "\t" << inTransID  << endl; //"\t" << inRho << endl;
         
 
     fNucleus = new cNucleus;
