@@ -22,6 +22,14 @@ def gCheckNumber(fChar):
   except ValueError:
     return False
     
+def gFindIter(fString, fSub, fN):
+  # Finds the nth occurence of fSub in fString
+  fStart = fString.find(fSub)
+  while fStart >= 0 and fN > 1:
+    fStart = fString.find(fSub, fStart+len(fSub))
+    fN -= 1
+  return fStart
+    
 def gMatchError(fValue, fUpper, fLower):
   if "E" in fValue:                                   # Sometimes B() values are in exponent format
     fFront, fExponent = fValue.split("E")
@@ -60,11 +68,19 @@ def gReturnB(fString):
       sVector.append(fString[3:])
       sVector.append("0")
       sVector.append("0")
-  elif fString[2] == "<" or fString[3:5] == "LT" or fString[3:5] == "LE":
+  elif fString[2] == "<": 
     sVector.append(fString[3:])
     sVector.append("0")
     sVector.append(fString[3:])
-  elif fString[2] == ">" or fString[3:5] == "GE" or fString[3:5] == "GT" or fString[3:5] == "AP": #Approximately
+  elif fString[3:5] ==  "LT" or fString[3:5] == "LE":
+    sVector.append(fString[6:])
+    sVector.append("0")
+    sVector.append(fString[6:])
+  elif fString[2] == ">":
+    sVector.append(fString[3:])
+    sVector.append("0")
+    sVector.append("0")
+  elif fString[3:5] == "GE" or fString[3:5] == "GT" or fString[3:5] == "AP": #Approximately
     sVector.append(fString[6:])
     sVector.append("0")
     sVector.append("0")
@@ -72,10 +88,11 @@ def gReturnB(fString):
     print fString
   return sVector
   
-fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
-fInput = urllib2.urlopen(fCSVURL)
-fReader = csv.reader(fInput)
-fOverwrite = list(fReader)
+#fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
+#fInput = urllib2.urlopen(fCSVURL)
+#fReader = csv.reader(fInput)
+#fOverwrite = list(fReader)
+fOverwrite = []
 
 fNull = ["0.0", "0.0", "0.0"]
 
@@ -150,16 +167,15 @@ for i in os.listdir(os.getcwd() + "/data"):
       
       sList = []                            # Halflife
       if float(fLine[9:18]) == 0.0:         # (STABLE)
-        sHalflife = ["0", "0", "0"]
+        sHalflife = ["0.0", "0.0", "0.0"]
         fLvlHalflife.append(sHalflife)
       else:
         sLifeString = fLine[39:49].strip()   
-
         sUnit = gReturnTime(sLifeString[-2:].strip())
         if sUnit != "??":
           sList.append(str(float(sLifeString[:-2].strip()) * sUnit))
         elif not sLifeString or sLifeString[-2:] == "EV" or "?" in sLifeString[-2:]:    # (BLANK)
-          sHalflife = ["0", "0", "0"]
+          sHalflife = ["0.0", "0.0", "0.0"]
           fLvlHalflife.append(sHalflife)
           continue
         else:
@@ -167,22 +183,28 @@ for i in os.listdir(os.getcwd() + "/data"):
           print "ATTN: UNKNOWN HALF-LIFE UNIT", sLifeString[-2:]
           break
           
-        if fLine[49] == "+":                # Error (+/-)
-          sSubstring = fLine[49:60].strip()
+        if "+" in fLine[49:55]:              # Error (+/-)
+          sSubstring = fLine[49:55].strip()
           sMatch = re.search(r"[^a-zA-Z](-)[^a-zA-Z]", sSubstring)
           sUpper, sLower = gMatchError(str(sLifeString[:-2].strip()), str(sSubstring[1:sMatch.start(1)]), str(sSubstring[sMatch.start(1)+1:]))
-          sList.append(sUpper)
-          sList.append(sLower)
-        elif fLine[49] == "G":              # Error (GT)
-          sList.append("0")                 # .. 0 error
-          sList.append("0")
-        elif fLine[49] == "L":
-          sList.append("0")
-          sList.append(str(sLifeString[:-2].strip()))
+          sList.append(str(float(sUpper)*sUnit))
+          sList.append(str(float(sLower)*sUnit))
+        elif "G" in fLine[49:55]:              # Error (GT)
+          sList.append("0.0")                 # .. 0 error
+          sList.append("0.0")
+        elif "L" in fLine[49:55]:
+          sList.append("0.0")
+          sList.append(str(float(sLifeString[:-2].strip())*sUnit))
+        elif "AP" in fLine[49:55]:
+          sList.append("0.0")
+          sList.append("0.0")
+        elif fLine[49:55].strip():
+          sUpper, sLower = gMatchError(str(sLifeString[:-2].strip()), str(fLine[49:55].strip()), str(fLine[49:55].strip()))
+          sList.append(str(float(sUpper)*sUnit))
+          sList.append(str(float(sLower)*sUnit))
         else:
-          sUpper, sLower = gMatchError(str(sLifeString[:-2].strip()), str(fLine[49:60].strip()), str(fLine[49:60].strip()))
-          sList.append(sUpper)
-          sList.append(sLower)
+          sList.append("0.0")
+          sList.append("0.0")
         fLvlHalflife.append(sList)
     
     elif fLine[5:8] == "  G" and fGroundRead:           # Transition
@@ -209,13 +231,13 @@ for i in os.listdir(os.getcwd() + "/data"):
         if sTrsMixing:
           fTrsMixing.append(sTrsMixing)
         else:
-          fTrsMixing.append(fNull)
+          fTrsMixing.append(fNull)       
         
       # Reset the details
-      sTrsBM1 = []
-      sTrsBE2 = []
-      sTrsMixing = []
-      sTrsLife = []
+      sTrsBM1 = fNull
+      sTrsBE2 = fNull
+      sTrsMixing = fNull
+      sTrsLife = fNull
       sTrsEnergy = 0.0
       sTrsID = "1"
        
@@ -227,12 +249,27 @@ for i in os.listdir(os.getcwd() + "/data"):
       sTrsID = "1" + fLvlSpin[-1] + fLvlParity[-1] + fLvlCount[-1] + fLvlSpin[sIndex] + fLvlParity[sIndex] + fLvlCount[sIndex]
       
       if fLine[41:55].strip():                # If there's a mixing ratio....
-        sStr = "XX="+re.sub(' +',' ',fLine[41:55].strip())
+        sStr = ""
+        if "GE" in fLine[41:55] or "GT" in fLine[41:55] or ">" in fLine[41:55]:
+          sStr = "XX>"+re.sub(' +',' ',fLine[41:55].strip()[:-2])
+        elif "LE" in fLine[41:55] or "LT" in fLine[41:55] or "<" in fLine[41:55]:
+          sStr = "XX<"+re.sub(' +',' ',fLine[41:55].strip()[:-2])
+        elif "AP" in fLine[41:55]:
+          sStr = "XX="+re.sub(' +',' ',fLine[41:55].strip()[:-2])
+        else:
+          sStr = "XX="+re.sub(' +',' ',fLine[41:55].replace("+", " +").replace(" -", "-").strip()) # Gets rid of extra spaces
+        if nucMass==238 and nucProton==94:
+          print sStr
         sTrsMixing = gReturnB(sStr)
 
 
     elif fLine[5:8] == "B G":                 # B(.L) values
-      sLine = fLine[9:].strip().translate(None, '()BW')
+      sLine = fLine[9:].strip()
+      if sLine[-1] == ")" and sLine[-10] == "(": 
+        sLine = sLine[:-10]                   # Delete reference
+      if sLine.count("$") > 1:
+        sLine = sLine[:gFindIter(sLine, "$", 2)]
+      sLine = sLine.translate(None, '()BW?')
       try:                                  # Assumption is made that only 2, at most, B() values listed
         sOne, sTwo = sLine.split('$')
         if sOne[:2] == "M1" and sTwo[:2] == "E2":
@@ -246,6 +283,7 @@ for i in os.listdir(os.getcwd() + "/data"):
           sTrsBE2 = gReturnB(sLine)
         elif sLine[:2] == "M1":
           sTrsBM1 = gReturnB(sLine)
+
           
   fInput.close()
   
