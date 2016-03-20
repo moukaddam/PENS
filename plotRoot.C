@@ -78,6 +78,7 @@ string GetName(string fName) {
   if (fName == "nEnergy4n1") return "4^{+}_{1} Energy [keV]";
   if (fName == "nEnergy2n2") return "2^{+}_{2} Energy [keV]";
   if (fName == "transID") return "Transition ID";
+  if (fName == "transEnergy") return "Transition Energy [keV]";
   if (fName == "transLifetime") return "Parent Lifetime [ps]";
   if (fName == "transBE2") return "B(E2) [W.u.]";
   if (fName == "transBM1") return "B(M1) [W.u.]";
