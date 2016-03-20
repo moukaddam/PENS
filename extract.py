@@ -1,6 +1,15 @@
 import re, math, os, csv, requests, urllib2
 
+# PENS
+# ====
+# Lee J. Evitts (evitts at triumf.ca)
+#
+#
+# The goal of the PENS project is to parse information of even-even nuclei from ENSDF for purpose of
+# plotting systematics, though the code can be adapted for other things e.g. CLX or simulation inputs.  
+
 def gReturnProton(fName):
+  # Function to return proton number from name
   return {
     'HE': 2, 'BE': 4, 'C': 6, 'O': 8, 'NE': 10, 'MG': 12, 'SI': 14, 'S': 16, 'AR': 18,
     'CA': 20, 'TI': 22, 'CR': 24, 'FE': 26, 'NI': 28, 'ZN': 30, 'GE': 32, 'SE': 34,
@@ -11,11 +20,13 @@ def gReturnProton(fName):
   }.get(fName, "00")
          
 def gReturnTime(fUnit):
+  # Function to return conversion of [time] to PS
   return {
     'PS': 1.0, 'FS': 0.001, 'NS': 1000., 'US': 1.0E6, 'MS': 1.0E9, 'M': 6.0E13, 'S': 1.0E12, 'H': 3.6E15
   }.get(fUnit, "??")
   
 def gCheckNumber(fChar):
+  # Function to check if string can be converted to integer
   try:
     int(fChar)
     return True
@@ -31,6 +42,8 @@ def gFindIter(fString, fSub, fN):
   return fStart
     
 def gMatchError(fValue, fUpper, fLower):
+  # Errors in ENSDF are the last X digts of the value, this function changes error to
+  # same magnitude as value e.g. 2.3(3) becomes 2.3 0.3
   fPrecision = 0
   if "E" in fValue:                                   # Sometimes B() values are in exponent format
     fFront, fExponent = fValue.split("E")
@@ -92,6 +105,7 @@ def gReturnB(fString):
     print fString
   return sVector
   
+# Import google csv in to overwrite list
 fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
 fInput = urllib2.urlopen(fCSVURL)
 fReader = csv.reader(fInput)
@@ -99,6 +113,7 @@ fOverwrite = list(fReader)
 
 fNull = ["0.0", "0.0", "0.0"]
 
+# In turn, open each file within the data folder
 fOutput = open('collate.dat', 'w') 
 for i in os.listdir(os.getcwd() + "/data"):
 
@@ -122,7 +137,7 @@ for i in os.listdir(os.getcwd() + "/data"):
   nucName = fInput.read(2)
   nucProton = gReturnProton(nucName.strip())
   
-  #print "Reading in " + str(nucMass) + nucName
+  print "Reading in " + str(nucMass) + nucName
  
   sTrsBM1 = []
   sTrsBE2 = []
@@ -144,7 +159,7 @@ for i in os.listdir(os.getcwd() + "/data"):
       if "X" in fLine[9:19] or "Y" in fLine[9:19]:       # .. skipping the +X levels
         continue
       
-      fLvlEnergy.append(float(fLine[9:19])) # Energy, omitting error (error will be in gamma)
+      fLvlEnergy.append(float(fLine[9:19])) # Energy, omitting error 
       fGroundRead = True
       sSpin = fLine[21:25].strip()
 
@@ -288,7 +303,7 @@ for i in os.listdir(os.getcwd() + "/data"):
           
   fInput.close()
   
-  #print " Read in", len(fLvlEnergy), "energy levels and", len(fTrsID), "transitions"
+  print " Read in", len(fLvlEnergy), "energy levels and", len(fTrsID), "transitions"
 
   # This chunk will find the energy of ..
   fEneS0 = "0.0"
