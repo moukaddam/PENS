@@ -2,6 +2,7 @@
 #include <TTree.h>
 
 #include <cmath>
+#include <string>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -16,7 +17,8 @@ class cNucleus {
   vector <Double_t> nEnergy0n2, nEnergy2n1, nEnergy4n1, nEnergy2n2;
   
   // Transitions
-  vector <Double_t> transID, transLifetime, transBE2, transBM1, transMix, transq2, transRho, transX;
+  vector <string> transID;
+  vector <Double_t> transEnergy, transLifetime, transBE2, transBM1, transMix, transq2, transRho, transX;
 
   public:      
         
@@ -37,8 +39,8 @@ class cNucleus {
     void SetEnergy4n1(Double_t sEnergy4n1) {nEnergy4n1.push_back(sEnergy4n1);}
     void SetEnergy2n2(Double_t sEnergy2n2) {nEnergy2n2.push_back(sEnergy2n2);}
     
-    void SetID(Int_t sID) {transID.push_back(sID);}
-    
+    void SetID(string sID) {transID.push_back(sID);}
+    void SetEnergy(Double_t sValue) { transEnergy.push_back(sValue);}
     
     void SetLifetime(Double_t sValue, Double_t sUpper, Double_t sLower) {
       transLifetime.clear();
@@ -94,7 +96,7 @@ int createRoot() {
   int inA, inZ, inN;
   double inB, inBu, inBl, inQ;
   double inEnergy0n2, inEnergy2n1, inEnergy4n1, inEnergy2n2;
-  string inTransID
+  string inTransID;
   double inTransEnergy, inLife, inLifeu, inLifel, inBE2, inBE2u, inBE2l, inBM1, inBM1u, inBM1l;
   double inMix, inMixu, inMixl, inq2, inq2e, inRho, inRhol, inRhou;
   double inX, inXe;
@@ -111,7 +113,7 @@ int createRoot() {
   Int_t fCounter = 1;
  
   // Read in data
-  ifstream inFile("transitions.csv");
+  ifstream inFile("collate.dat");
        
   while (true) {
     // Read from file
@@ -119,18 +121,12 @@ int createRoot() {
            >> inEnergy0n2 >> inEnergy2n1 >> inEnergy4n1 >> inEnergy2n2
            >> inTransID >> inTransEnergy
            >> inLife >> inLifeu >> inLifel >> inBE2 >> inBE2u >> inBE2l
-           >> inBM1 >> inBM1u >> inBM1l >> inMix >> inMixu >>inMixl
-           >> inq2 >> inq2e >> inRho >> inRhol >> inRhou >> inX >> inXe;
-    
+           >> inBM1 >> inBM1u >> inBM1l  >> inMix >> inMixu >>inMixl
+           >> inq2 >> inq2e >> inRho >> inRhou >> inRhol >> inX >> inXe;
+
     if (inFile.eof()) break;
     
-    // Create trans ID
-    Int_t sTransID = 10000;
-    sTransID += inTransC * pow(10, 0);
-    sTransID += inTransD * pow(10, 1);
-    sTransID += inTransA * pow(10, 2);
-    sTransID += inTransB * pow(10, 3);
-    cout << fCounter << "\t" << inA << "\t" << inZ << "\t" << sTransID  << "\t" << inRho << endl;
+    //cout << fCounter << "\t" << inA << "\t" << inZ << "\t" << inTransID  << endl; //"\t" << inRho << endl;
         
 
     fNucleus = new cNucleus;
@@ -147,7 +143,8 @@ int createRoot() {
       fNucleus->SetEnergy4n1(inEnergy4n1);
       fNucleus->SetEnergy2n2(inEnergy2n2);
         
-      fNucleus->SetID(sTransID);
+      fNucleus->SetID(inTransID);
+      fNucleus->SetEnergy(inTransEnergy);
       fNucleus->SetLifetime( inLife, inLifeu, inLifel);
       fNucleus->SetBE2( inBE2, inBE2u, inBE2l);
       fNucleus->SetBM1( inBM1, inBM1u, inBM1l);
