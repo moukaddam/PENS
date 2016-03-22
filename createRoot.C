@@ -96,7 +96,8 @@ int createRoot() {
   int inA, inZ, inN;
   double inB, inBu, inBl, inQ;
   double inEnergy0n2, inEnergy2n1, inEnergy4n1, inEnergy2n2;
-  string inTransID;
+  string inTransSpinPa, inTransSpinDa;
+  string inTransCountPa, inTransCountDa;
   double inTransEnergy, inLife, inLifeu, inLifel, inBE2, inBE2u, inBE2l, inBM1, inBM1u, inBM1l;
   double inMix, inMixu, inMixl, inq2, inq2e, inRho, inRhol, inRhou;
   double inX, inXe;
@@ -119,14 +120,16 @@ int createRoot() {
     // Read from file
     inFile >> inA >> inZ >> inN >> inB >> inBu >> inBl >> inQ
            >> inEnergy0n2 >> inEnergy2n1 >> inEnergy4n1 >> inEnergy2n2
-           >> inTransID >> inTransEnergy
+           >> inTransSpinPa >> inTransCountPa >> inTransSpinDa >> inTransCountDa
+           >> inTransEnergy
            >> inLife >> inLifeu >> inLifel >> inBE2 >> inBE2u >> inBE2l
            >> inBM1 >> inBM1u >> inBM1l  >> inMix >> inMixu >>inMixl
            >> inq2 >> inq2e >> inRho >> inRhou >> inRhol >> inX >> inXe;
 
     if (inFile.eof()) break;
     
-    cout << fCounter << "\t" << inA << "\t" << inZ << "\t" << inTransID  << endl; //"\t" << inRho << endl;
+    cout << fCounter << "\t" << inA << "\t" << inZ << "\t" << inTransEnergy  << endl; //"\t" << inRho << endl;
+    if (inA == 0) break;
         
 
     fNucleus = new cNucleus;
@@ -143,7 +146,7 @@ int createRoot() {
       fNucleus->SetEnergy4n1(inEnergy4n1);
       fNucleus->SetEnergy2n2(inEnergy2n2);
         
-      fNucleus->SetID(inTransID);
+      fNucleus->SetID(inTransSpinPa);
       fNucleus->SetEnergy(inTransEnergy);
       fNucleus->SetLifetime( inLife, inLifeu, inLifel);
       fNucleus->SetBE2( inBE2, inBE2u, inBE2l);

@@ -171,13 +171,11 @@ for i in os.listdir(os.getcwd() + "/data"):
       fLvlEnergy.append(float(fLine[9:19])) # Energy, omitting error 
       sSpin = fLine[21:25].strip()
 
-      if len(sSpin) == 2 and gCheckNumber(sSpin.translate(None, '+-')):
+      # Check for definitive spin/parity assignment (must have + or -, and must be a number without either of those characters)
+      if any(sChar in sSpin for sChar in ["+", "-"]) and gCheckNumber(sSpin.translate(None, '+-')):
         fLvlSpin.append(sSpin)
         sCount = fLvlSpin.count(sSpin)
-        if sCount < 10:
-          fLvlCount.append(str(sCount))
-        else:
-          fLvlCount.append("x")
+        fLvlCount.append(str(sCount))
       else:                                 #  If not J+ format (J<10) then subbed with char
         fLvlSpin.append("xx")
         fLvlCount.append("x")
