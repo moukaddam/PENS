@@ -171,7 +171,7 @@ for i in os.listdir(os.getcwd() + "/data"):
       fLvlEnergy.append(float(fLine[9:19])) # Energy, omitting error 
       sSpin = fLine[21:25].strip()
 
-      if len(sSpin) == 2 and gCheckNumber(sSpin[0]):
+      if len(sSpin) == 2 and gCheckNumber(sSpin.translate(None, '+-')):
         fLvlSpin.append(sSpin)
         sCount = fLvlSpin.count(sSpin)
         if sCount < 10:
