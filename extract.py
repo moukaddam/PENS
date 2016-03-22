@@ -22,13 +22,13 @@ def gReturnProton(fName):
 def gReturnTime(fUnit):
   # Function to return conversion of [time] to PS
   return {
-    'PS': 1.0, 'FS': 0.001, 'NS': 1000., 'US': 1.0E6, 'MS': 1.0E9, 'M': 6.0E13, 'S': 1.0E12, 'H': 3.6E15
+    'PS': 1.0, 'FS': 0.001, 'NS': 1000., 'US': 1.0E6, 'MS': 1.0E9, 'M': 6.0E13, 'S': 1.0E12, 'H': 3.6E15, 'Y': 3.154E19, 'D': 8.64E16, 'AS':1E-6
   }.get(fUnit, "??")
   
 def gCheckNumber(fChar):
   # Function to check if string can be converted to integer
   try:
-    int(fChar)
+    float(fChar)
     return True
   except ValueError:
     return False
@@ -106,10 +106,15 @@ def gReturnB(fString):
   return sVector
   
 # Import google csv in to overwrite list
-fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
-fInput = urllib2.urlopen(fCSVURL)
-fReader = csv.reader(fInput)
-fOverwrite = list(fReader)
+print "Reading in from online spreadsheet..."
+try:
+  fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
+  fInput = urllib2.urlopen(fCSVURL)
+  fReader = csv.reader(fInput)
+  fOverwrite = list(fReader)
+  print "... SUCCESS!"
+except urllib.request.URLError:
+  print "... FAILURE!"
 
 fNull = ["0.0", "0.0", "0.0"]
 
@@ -118,17 +123,18 @@ fOutput = open('collate.dat', 'w')
 for i in os.listdir(os.getcwd() + "/data"):
 
   fLvlEnergy = []
-  fLvlSpPa = [] # Easier to create a list of both spin & parity for counting purposes
   fLvlSpin = []
   fLvlCount = []
-  fLvlParity = []
   fLvlHalflife = []
 
   fTrsBM1 = []
   fTrsBE2 = []
   fTrsMixing = []
   fTrsEnergy = []
-  fTrsID = []
+  fTrsSpinPa = []  # J+ of "parent" state
+  fTrsCountPa = [] # n of "parent"
+  fTrsSpinDa = []  # J+ of "daughter" state
+  fTrsCountDa = [] # n of "daughter"
   fTrsLife = []
 
   # Open the file, get the mass and proton number  
@@ -143,48 +149,41 @@ for i in os.listdir(os.getcwd() + "/data"):
   sTrsBE2 = []
   sTrsMixing = []
   sTrsEnergy = 0.0
-  sTrsID = "1"
+  sTrsSpinPa = ""
+  sTrsCountPa = ""
+  sTrsSpinDa = ""
+  sTrsCountDa = ""
   
   fGroundRead = False
 
   # Read through each line in the file, firstly looking for energy levels
   for fLine in fInput:
     
-    if len(fLvlEnergy) == 20:               # Limit of the first x energy levels
-      break
+    #if len(fLvlEnergy) == 200:               # Limit of the first x energy levels
+    #  break
     if fLine[5:8] != "  L" and fLine[5:8] != "  G" and fLine[5:8] != "B G":
       continue                              # Skip everything that isn't energy level, transition, transition details
 
     if fLine[5:8] == "  L":                 # Energy level 
-      if "X" in fLine[9:19] or "Y" in fLine[9:19]:       # .. skipping the +X levels
+      if not gCheckNumber(fLine[9:19]):       # .. skipping the +X levels
         continue
-      
+      #print(repr(fLine[9:19]))
       fLvlEnergy.append(float(fLine[9:19])) # Energy, omitting error 
-      fGroundRead = True
       sSpin = fLine[21:25].strip()
 
       if len(sSpin) == 2 and gCheckNumber(sSpin[0]):
-        fLvlSpPa.append(sSpin)
-        fLvlSpin.append(sSpin[0])           # Spin
-        if sSpin[1] == "+":                 # Parity (+ = 1, - = 0)
-          fLvlParity.append("1")       
-        elif sSpin[1] == "-":
-          fLvlParity.append("0")
-        else:
-          fLvlParity.append("x")
-        sCount = fLvlSpPa.count(sSpin)
+        fLvlSpin.append(sSpin)
+        sCount = fLvlSpin.count(sSpin)
         if sCount < 10:
           fLvlCount.append(str(sCount))
         else:
           fLvlCount.append("x")
       else:                                 #  If not J+ format (J<10) then subbed with char
-        fLvlSpPa.append("xx")
-        fLvlSpin.append("x")
-        fLvlParity.append("x")
+        fLvlSpin.append("xx")
         fLvlCount.append("x")
       
       sList = []                            # Halflife
-      if float(fLine[9:18]) == 0.0:         # (STABLE)
+      if not fGroundRead:         # (STABLE)
         sHalflife = ["0.0", "0.0", "0.0"]
         fLvlHalflife.append(sHalflife)
       else:
@@ -224,6 +223,8 @@ for i in os.listdir(os.getcwd() + "/data"):
           sList.append("0.0")
           sList.append("0.0")
         fLvlHalflife.append(sList)
+        
+      fGroundRead = True
     
     elif fLine[5:8] == "  G" and fGroundRead:           # Transition
     
@@ -232,7 +233,10 @@ for i in os.listdir(os.getcwd() + "/data"):
     
       # Encountering a new transition, write to vector the previous one
       if sTrsEnergy != 0:
-        fTrsID.append(sTrsID)
+        fTrsSpinPa.append(sTrsSpinPa)
+        fTrsCountPa.append(sTrsCountPa)
+        fTrsSpinDa.append(sTrsSpinDa)
+        fTrsCountDa.append(sTrsCountDa)
         fTrsEnergy.append(str(sTrsEnergy))
         if sTrsLife:
           fTrsLife.append(sTrsLife)
@@ -257,14 +261,20 @@ for i in os.listdir(os.getcwd() + "/data"):
       sTrsMixing = fNull
       sTrsLife = fNull
       sTrsEnergy = 0.0
-      sTrsID = "1"
+      sTrsSpinPa = ""
+      sTrsCountPa = ""
+      sTrsSpinDa = ""
+      sTrsCountDa = ""
        
       sTrsEnergy = float(fLine[9:18].strip())
       sFinEnergy = min(fLvlEnergy, key=lambda x:abs(x-(fLvlEnergy[-1] - sTrsEnergy))) # Find final state
       sIndex = fLvlEnergy.index(sFinEnergy)
       # Create transition ID
-      sTrsLife = fLvlHalflife[len(fLvlEnergy)-1]
-      sTrsID = "1" + fLvlSpin[-1] + fLvlParity[-1] + fLvlCount[-1] + fLvlSpin[sIndex] + fLvlParity[sIndex] + fLvlCount[sIndex]
+      sTrsLife = fLvlHalflife[-1]
+      sTrsSpinPa = fLvlSpin[-1]
+      sTrsCountPa = fLvlCount[-1]
+      sTrsSpinDa = fLvlSpin[sIndex]
+      sTrsCountDa = fLvlCount[sIndex]
       
       if fLine[41:55].strip():                # If there's a mixing ratio....
         sStr = ""
@@ -303,7 +313,7 @@ for i in os.listdir(os.getcwd() + "/data"):
           
   fInput.close()
   
-  print " Read in", len(fLvlEnergy), "energy levels and", len(fTrsID), "transitions"
+  print " Read in", len(fLvlEnergy), "energy levels and", len(fTrsSpinPa), "transitions"
 
   # This chunk will find the energy of ..
   fEneS0 = "0.0"
@@ -313,24 +323,24 @@ for i in os.listdir(os.getcwd() + "/data"):
   inSec0 = -1
   try:
     for j in xrange(2):           # .. the second 0+
-      inSec0 = fLvlSpPa.index("0+", inSec0 + 1)
+      inSec0 = fLvlSpin.index("0+", inSec0 + 1)
     fEneS0 = str(fLvlEnergy[inSec0])
   except ValueError:
     fEneS0 = "0.0"
   try:
-    inFir2 = fLvlSpPa.index("2+") # .. the first 2+
+    inFir2 = fLvlSpin.index("2+") # .. the first 2+
     fEneF2 = str(fLvlEnergy[inFir2])
   except ValueError:
     fEneF2 = "0.0"
   try:
-    inFir4 = fLvlSpPa.index("4+") # .. the first 4+
+    inFir4 = fLvlSpin.index("4+") # .. the first 4+
     fEneF4 = str(fLvlEnergy[inFir4])
   except ValueError:
     fEneF4 = "0.0"
   inSec2 = -1
   try:
     for j in xrange(2):           # .. the second 2+
-      inSec2 = fLvlSpPa.index("2+", inSec2 + 1)
+      inSec2 = fLvlSpin.index("2+", inSec2 + 1)
       fEneS2 = str(fLvlEnergy[inSec2])
   except:
     fEneS2 = "0.0"
@@ -344,26 +354,31 @@ for i in os.listdir(os.getcwd() + "/data"):
       fOverList.append(row)
  
   # Write to file
-  for i in range(0, len(fTrsID)):
+  for i in range(0, len(fTrsSpinPa)):
     # Find the nucleus
     sQSq = [0.0, 0.0]
     sRho = [0.0, 0.0, 0.0]
     sX = [0.0, 0.0]
 
     for j in range(len(fOverList)):
-      if fOverwrite[fOverList[j]][7] == fTrsID[i]:
-        if fOverwrite[fOverList[j]][8] != 0:
-          fTrsBE2[i] = [fOverwrite[fOverList[j]][8], fOverwrite[fOverList[j]][9], fOverwrite[fOverList[j]][10]]
-        sQSq = [fOverwrite[fOverList[j]][11], fOverwrite[fOverList[j]][12]]
-        sRho = [fOverwrite[fOverList[j]][13], fOverwrite[fOverList[j]][14], fOverwrite[fOverList[j]][15]]
-        sX = [fOverwrite[fOverList[j]][16], fOverwrite[fOverList[j]][17]]
+      
+    
+      listID = fTrsSpinPa[i] + fTrsCountPa[i] + fTrsSpinDa[i] + fTrsCountDa[i]
+      overID = fOverwrite[fOverList[j]][7] + fOverwrite[fOverList[j]][8] + fOverwrite[fOverList[j]][9] + fOverwrite[fOverList[j]][10]
+      if listID == overID: #overwrite
+        if fOverwrite[fOverList[j]][11] != 0:
+          fTrsBE2[i] = [fOverwrite[fOverList[j]][11], fOverwrite[fOverList[j]][12], fOverwrite[fOverList[j]][13]]
+        sQSq = [fOverwrite[fOverList[j]][14], fOverwrite[fOverList[j]][15]]
+        sRho = [fOverwrite[fOverList[j]][16], fOverwrite[fOverList[j]][17], fOverwrite[fOverList[j]][18]]
+        sX = [fOverwrite[fOverList[j]][19], fOverwrite[fOverList[j]][20]]
         fOverList.pop(j)
         break
   
     fOutput.write(str(nucMass) + " " + str(nucProton) + " " + str(nucMass-nucProton))
     fOutput.write(" " + fBeta[0] + " " + fBeta[1] + " " + fBeta[2] + " " + fBeta[3])
     fOutput.write(" " + fEneS0 + " " + fEneF2 + " " + fEneF4 + " " + fEneS2)
-    fOutput.write(" " + fTrsID[i] + " " + fTrsEnergy[i])
+    fOutput.write(" " + fTrsSpinPa[i] + " " + fTrsCountPa[i] + " " + fTrsSpinDa[i] + " " + fTrsCountDa[i])
+    fOutput.write(" " + fTrsEnergy[i])
     fOutput.write(" " + fTrsLife[i][0] + " " + fTrsLife[i][1] + " " + fTrsLife[i][2])
     fOutput.write(" " + fTrsBE2[i][0] + " " + fTrsBE2[i][1] + " " + fTrsBE2[i][2])
     fOutput.write(" " + fTrsBM1[i][0] + " " + fTrsBM1[i][1] + " " + fTrsBM1[i][2])
@@ -373,19 +388,20 @@ for i in os.listdir(os.getcwd() + "/data"):
     fOutput.write(" " + str(sX[0]) + " " + str(sX[1]))
     fOutput.write("\n")
 
-  # Write any transitions left in 'overwrite'
+  # Write any transitions left in 'overwrite'.  Missing components need to be calculated
   for i in range(0, len(fOverList)):
     fOutput.write(str(nucMass) + " " + str(nucProton) + " " + str(nucMass-nucProton))
     fOutput.write(" " + fBeta[0] + " " + fBeta[1] + " " + fBeta[2] + " " + fBeta[3])
     fOutput.write(" " + fEneS0 + " " + fEneF2 + " " + fEneF4 + " " + fEneS2)
-    fOutput.write(" " + fOverwrite[fOverList[i]][7] + " 0.0") # Transition energy is missing, may be able to calculate
-    fOutput.write(" 0.0 0.0 0.0")
-    fOutput.write(" " + fOverwrite[fOverList[i]][8] + " " + fOverwrite[fOverList[i]][9] + " " + fOverwrite[fOverList[i]][10])
-    fOutput.write(" 0.0 0.0 0.0")
-    fOutput.write(" 0.0 0.0 0.0")
-    fOutput.write(" " + fOverwrite[fOverList[i]][11] + " " + fOverwrite[fOverList[i]][12])
-    fOutput.write(" " + fOverwrite[fOverList[i]][13] + " " + fOverwrite[fOverList[i]][14] + " " + fOverwrite[fOverList[i]][15])
-    fOutput.write(" " + fOverwrite[fOverList[i]][16] + " " + fOverwrite[fOverList[i]][17])
+    fOutput.write(" " + fOverwrite[fOverList[i]][7] + " " + fOverwrite[fOverList[i]][8] + " " + fOverwrite[fOverList[i]][9] + " " + fOverwrite[fOverList[i]][10])
+    fOutput.write(" " + "0.0") # Transition energy is missing in online spreadsheet
+    fOutput.write(" 0.0 0.0 0.0") # Parent halflife is missing
+    fOutput.write(" " + fOverwrite[fOverList[i]][11] + " " + fOverwrite[fOverList[i]][12] + " " + fOverwrite[fOverList[i]][13])
+    fOutput.write(" 0.0 0.0 0.0") # No B(M1) information in online spreadsheet
+    fOutput.write(" 0.0 0.0 0.0") # No mixing either
+    fOutput.write(" " + fOverwrite[fOverList[i]][14] + " " + fOverwrite[fOverList[i]][15])
+    fOutput.write(" " + fOverwrite[fOverList[i]][16] + " " + fOverwrite[fOverList[i]][17] + " " + fOverwrite[fOverList[i]][18])
+    fOutput.write(" " + fOverwrite[fOverList[i]][19] + " " + fOverwrite[fOverList[i]][20])
     fOutput.write("\n")
   
   
