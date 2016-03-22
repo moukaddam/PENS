@@ -366,9 +366,11 @@ for i in os.listdir(os.getcwd() + "/data"):
       if listID == overID: #overwrite
         if fOverwrite[fOverList[j]][11] != 0:
           fTrsBE2[i] = [fOverwrite[fOverList[j]][11], fOverwrite[fOverList[j]][12], fOverwrite[fOverList[j]][13]]
-        sQSq = [fOverwrite[fOverList[j]][14], fOverwrite[fOverList[j]][15]]
-        sRho = [fOverwrite[fOverList[j]][16], fOverwrite[fOverList[j]][17], fOverwrite[fOverList[j]][18]]
-        sX = [fOverwrite[fOverList[j]][19], fOverwrite[fOverList[j]][20]]
+        if fOverwrite[fOverList[j]][14] != 0:
+          fTrsBM1[i] = [fOverwrite[fOverList[j]][14], fOverwrite[fOverList[j]][15], fOverwrite[fOverList[j]][16]]
+        sQSq = [fOverwrite[fOverList[j]][17], fOverwrite[fOverList[j]][18]]
+        sRho = [fOverwrite[fOverList[j]][19], fOverwrite[fOverList[j]][20], fOverwrite[fOverList[j]][21]]
+        sX = [fOverwrite[fOverList[j]][22], fOverwrite[fOverList[j]][23]]
         fOverList.pop(j)
         break
   
@@ -395,11 +397,11 @@ for i in os.listdir(os.getcwd() + "/data"):
     fOutput.write(" " + "0.0") # Transition energy is missing in online spreadsheet
     fOutput.write(" 0.0 0.0 0.0") # Parent halflife is missing
     fOutput.write(" " + fOverwrite[fOverList[i]][11] + " " + fOverwrite[fOverList[i]][12] + " " + fOverwrite[fOverList[i]][13])
-    fOutput.write(" 0.0 0.0 0.0") # No B(M1) information in online spreadsheet
+    fOutput.write(" " + fOverwrite[fOverList[i]][14] + " " + fOverwrite[fOverList[i]][15] + " " + fOverwrite[fOverList[i]][16])
     fOutput.write(" 0.0 0.0 0.0") # No mixing either
-    fOutput.write(" " + fOverwrite[fOverList[i]][14] + " " + fOverwrite[fOverList[i]][15])
-    fOutput.write(" " + fOverwrite[fOverList[i]][16] + " " + fOverwrite[fOverList[i]][17] + " " + fOverwrite[fOverList[i]][18])
-    fOutput.write(" " + fOverwrite[fOverList[i]][19] + " " + fOverwrite[fOverList[i]][20])
+    fOutput.write(" " + fOverwrite[fOverList[i]][17] + " " + fOverwrite[fOverList[i]][18])
+    fOutput.write(" " + fOverwrite[fOverList[i]][19] + " " + fOverwrite[fOverList[i]][20] + " " + fOverwrite[fOverList[i]][21])
+    fOutput.write(" " + fOverwrite[fOverList[i]][22] + " " + fOverwrite[fOverList[i]][23])
     fOutput.write("\n")
   
   
