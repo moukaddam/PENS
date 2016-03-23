@@ -178,8 +178,8 @@ for i in os.listdir(os.getcwd() + "/data"):
         sCount = fLvlSpin.count(sSpin)
         fLvlCount.append(str(sCount))
       else:                                 #  If not J+ format (J<10) then subbed with char
-        fLvlSpin.append("x")
-        fLvlCount.append("x")
+        fLvlSpin.append("0")
+        fLvlCount.append("0")
       
       sList = []                            # Halflife
       if not fGroundRead:         # (STABLE)
@@ -361,7 +361,17 @@ for i in os.listdir(os.getcwd() + "/data"):
   fOutput.write("#L\n")
   fOutput.write(str(len(fLvlEnergy)) + "\n")
   for i in range(0, len(fLvlEnergy)):
-    fOutput.write(str(fLvlEnergy[i]) + " " + fLvlSpin[i] + " " + str(fLvlCount[i]) + " " + fLvlHalflife[i][0] + " " + fLvlHalflife[i][1] + " " + fLvlHalflife[i][2] + "\n")
+    fOutput.write(str(fLvlEnergy[i]))
+    if any(sChar in fLvlSpin[i] for sChar in ["+", "-"]):
+      sParity = ""
+      if fLvlSpin[i][-1] == "+":
+        sParity = "1"
+      else:
+        sParity = "-1"
+      fOutput.write(" " + fLvlSpin[i].translate(None, '+-') + " " + sParity + " " + fLvlCount[i])
+    else:
+      fOutput.write("0 0 0")
+    fOutput.write(" " + fLvlHalflife[i][0] + " " + fLvlHalflife[i][1] + " " + fLvlHalflife[i][2] + "\n")
 
   fOutput.write("#T\n")
   fOutput.write(str(len(fTrsSpinPa)) + "\n")
@@ -387,8 +397,24 @@ for i in os.listdir(os.getcwd() + "/data"):
         fOverList.pop(j)
         break
   
-    
-    fOutput.write(fTrsSpinPa[i] + " " + fTrsCountPa[i] + " " + fTrsSpinDa[i] + " " + fTrsCountDa[i])
+    if any(sChar in fTrsSpinPa[i] for sChar in ["+", "-"]):
+      sParity = ""
+      if fTrsSpinPa[i][-1] == "+":
+        sParity = "1"
+      else:
+        sParity = "-1"
+      fOutput.write(fTrsSpinPa[i].translate(None, '+-') + " " + sParity + " " + fTrsCountPa[i])
+    else:
+      fOutput.write("0 0 0")
+    if any(sChar in fTrsSpinDa[i] for sChar in ["+", "-"]):
+      sParity = ""
+      if fTrsSpinDa[i][-1] == "+":
+        sParity = "1"
+      else:
+        sParity = "-1"
+      fOutput.write(" " + fTrsSpinDa[i].translate(None, '+-') + " " + sParity + " " + fTrsCountDa[i])
+    else:
+      fOutput.write(" 0 0 0")
     fOutput.write(" " + fTrsEnergy[i])
     fOutput.write(" " + fTrsLife[i][0] + " " + fTrsLife[i][1] + " " + fTrsLife[i][2])
     fOutput.write(" " + fTrsBE2[i][0] + " " + fTrsBE2[i][1] + " " + fTrsBE2[i][2])
@@ -401,7 +427,24 @@ for i in os.listdir(os.getcwd() + "/data"):
 
   # Write any transitions left in 'overwrite'.  Missing components need to be calculated
   for i in range(0, len(fOverList)):
-    fOutput.write(fOverwrite[fOverList[i]][7] + " " + fOverwrite[fOverList[i]][8] + " " + fOverwrite[fOverList[i]][9] + " " + fOverwrite[fOverList[i]][10])
+    if any(sChar in fOverwrite[fOverList[i]][7] for sChar in ["+", "-"]):
+      sParity = ""
+      if fOverwrite[fOverList[i]][7][-1] == "+":
+        sParity = "1"
+      else:
+        sParity = "-1"
+      fOutput.write(fOverwrite[fOverList[i]][7].translate(None, '+-') + " " + sParity + " " + fOverwrite[fOverList[i]][8])
+    else:
+      fOutput.write("0 0 0")
+    if any(sChar in fOverwrite[fOverList[i]][9] for sChar in ["+", "-"]):
+      sParity = ""
+      if fOverwrite[fOverList[i]][9][-1] == "+":
+        sParity = "1"
+      else:
+        sParity = "-1"
+      fOutput.write(" " + fOverwrite[fOverList[i]][9].translate(None, '+-') + " " + sParity + " " + fOverwrite[fOverList[i]][10])
+    else:
+      fOutput.write(" 0 0 0")
     fOutput.write(" " + "0.0") # Transition energy is missing in online spreadsheet
     fOutput.write(" 0.0 0.0 0.0") # Parent halflife is missing
     fOutput.write(" " + fOverwrite[fOverList[i]][11] + " " + fOverwrite[fOverList[i]][12] + " " + fOverwrite[fOverList[i]][13])
