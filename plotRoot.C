@@ -97,9 +97,9 @@ int plotRoot() {
       Int_t sLevelParity = tLevels[i][1]; // + is +1, - is -1, tentative/unknown is 0
       Int_t sLevelCount = tLevels[i][2];  // nth state of Jpi.  tentative/unknown is 0
       
-      Double_t sTransLife = tTrans[i][7]; // Half-life [ps]
-      Double_t sTransLifeU = tTrans[i][8]; // upper error
-      Double_t sTransLifeL = tTrans[i][9]; // lower error
+      Double_t sTransLife = tTrans[i][4]; // Half-life [ps]
+      Double_t sTransLifeU = tTrans[i][5]; // upper error
+      Double_t sTransLifeL = tTrans[i][6]; // lower error
       
       if (sNeutron==34 && sLevelSpin==2 && sLevelCount==2) {  //  This is where you would define conditions
         fX.push_back(sMass);
