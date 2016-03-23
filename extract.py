@@ -137,6 +137,9 @@ for i in os.listdir(os.getcwd() + "/data"):
   fTrsSpinDa = []  # J+ of "daughter" state
   fTrsCountDa = [] # n of "daughter"
   fTrsLife = []
+  fTrsQSq = []
+  fTrsRho = []
+  fTrsX =[]
 
   # Open the file, get the mass and proton number  
   fInput = open("data/" + i,'r')
@@ -160,8 +163,8 @@ for i in os.listdir(os.getcwd() + "/data"):
   # Read through each line in the file, firstly looking for energy levels
   for fLine in fInput:
     
-    if len(fLvlEnergy) == 20:               # Limit of the first x energy levels
-      break
+    #if len(fLvlEnergy) == 20:               # Limit of the first x energy levels
+    #  break
     if fLine[5:8] != "  L" and fLine[5:8] != "  G" and fLine[5:8] != "B G":
       continue                              # Skip everything that isn't energy level, transition, transition details
 
@@ -373,17 +376,16 @@ for i in os.listdir(os.getcwd() + "/data"):
       fOutput.write(" 0 0 0")
     fOutput.write(" " + fLvlHalflife[i][0] + " " + fLvlHalflife[i][1] + " " + fLvlHalflife[i][2] + "\n")
 
-  fOutput.write("#T\n")
-  fOutput.write(str(len(fTrsSpinPa)) + "\n")
+  # Overwrite values
+  # Loop through each transition...
   for i in range(0, len(fTrsSpinPa)):
     
     sQSq = [0.0, 0.0]
     sRho = [0.0, 0.0, 0.0]
     sX = [0.0, 0.0]
-
+    # Loop through each overwrite row...
     for j in range(len(fOverList)):
-      
-    
+      # Compare transition IDs    
       listID = fTrsSpinPa[i] + fTrsCountPa[i] + fTrsSpinDa[i] + fTrsCountDa[i]
       overID = fOverwrite[fOverList[j]][7] + fOverwrite[fOverList[j]][8] + fOverwrite[fOverList[j]][9] + fOverwrite[fOverList[j]][10]
       if listID == overID: #overwrite
@@ -396,7 +398,17 @@ for i in os.listdir(os.getcwd() + "/data"):
         sX = [fOverwrite[fOverList[j]][22], fOverwrite[fOverList[j]][23]]
         fOverList.pop(j)
         break
-  
+        
+    fTrsQSq.append(sQSq)
+    fTrsRho.append(sRho)
+    fTrsX.append(sX)
+
+
+
+  fOutput.write("#T\n")
+  fOutput.write(str(len(fTrsSpinPa) + len(fOverList)) + "\n")
+  for i in range(0, len(fTrsSpinPa)):
+    
     if any(sChar in fTrsSpinPa[i] for sChar in ["+", "-"]):
       sParity = ""
       if fTrsSpinPa[i][-1] == "+":
@@ -420,9 +432,9 @@ for i in os.listdir(os.getcwd() + "/data"):
     fOutput.write(" " + fTrsBE2[i][0] + " " + fTrsBE2[i][1] + " " + fTrsBE2[i][2])
     fOutput.write(" " + fTrsBM1[i][0] + " " + fTrsBM1[i][1] + " " + fTrsBM1[i][2])
     fOutput.write(" " + fTrsMixing[i][0] + " " + fTrsMixing[i][1] + " " + fTrsMixing[i][2])
-    fOutput.write(" " + str(sQSq[0]) + " " + str(sQSq[1]))
-    fOutput.write(" " + str(sRho[0]) + " " + str(sRho[1]) + " " + str(sRho[2]))
-    fOutput.write(" " + str(sX[0]) + " " + str(sX[1]))
+    fOutput.write(" " + str(fTrsQSq[i][0]) + " " + str(fTrsQSq[i][1]))
+    fOutput.write(" " + str(fTrsRho[i][0]) + " " + str(fTrsRho[i][1]) + " " + str(fTrsRho[i][2]))
+    fOutput.write(" " + str(fTrsX[i][0]) + " " + str(fTrsX[i][1]))
     fOutput.write("\n")
 
   # Write any transitions left in 'overwrite'.  Missing components need to be calculated

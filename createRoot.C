@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <vector>
 
 using namespace std;
@@ -33,6 +34,11 @@ class cNucleus {
     void PushLevel(vector <double> sLevel) {nLevels.push_back(sLevel);}
     void PushTrans(vector <double> sTrans) {nTransitions.push_back(sTrans);}
     
+    void Clear(){
+      nDeformation.clear();
+      nLevels.clear();
+      nTransitions.clear();
+    };
 };
 
 
@@ -49,25 +55,29 @@ int createRoot() {
   // .. and create a new branch for each data member of event object
   Int_t fSplit = 1; // multi-branch -- what?
   Int_t fSize = 64000;
-  cNucleus *fNucleus = 0;
+  cNucleus *fNucleus = new cNucleus; 
   fRootTree->Branch("Nucleus", "cNucleus", &fNucleus, fSize, fSplit);
   
   Int_t fCounter = 1;
  
   // Read in data
   ifstream inFile("collate.dat");
-  string inString;
-  
+    
   while (true) {
     // Read from file
-    getline(inFile, inString);
+    string inLine;
+    stringstream inStream;
+    getline(inFile, inLine);
     if (inFile.eof()) break;
     
-    // Nuclear Information
-    if (inString == "#N") {
-      inFile >> inA >> inZ >> inN >> inB >> inBu >> inBl >> inQ;
+    // Nuclear Information   
+    if (inLine == "#N") {
+      getline(inFile, inLine);
+      inStream << inLine;
+      inStream >> inA >> inZ >> inN >> inB >> inBu >> inBl >> inQ;
+      cout << fCounter ++ << "\t" << inA << "\t" << inZ << endl;
       
-      fNucleus = new cNucleus; 
+      fNucleus->Clear(); 
       
       fNucleus->SetMass(inA);
       fNucleus->SetProton(inZ);
@@ -75,36 +85,56 @@ int createRoot() {
              
       fNucleus->SetDeformation(inB, inBu, inBl);
       fNucleus->SetQuadrupole(inQ);
+      inStream << "";
+      inStream.clear();
     
     // Level Information
-    } else if (inString == "#L") {
+    } else if (inLine == "#L") {
+      getline(inFile, inLine);
+      inStream << inLine;
       int sCount;
-      inFile >> sCount;       // Get number of levels
+      inStream >> sCount;       // Get number of levels
+      inStream << "";
+      inStream.clear();
       for (int i=0; i<sCount; i++) {
+        getline(inFile, inLine);
+        inStream << inLine;
         vector <double> sLevel;
         for (int j=0; j<7; j++) {
-          inFile >> inValue;
-          sLevel.push_back(inValue);
+          inStream >> inValue;
+          sLevel.push_back(inValue);          
         }
         fNucleus->PushLevel(sLevel);
         sLevel.clear();
+        inStream << "";
+        inStream.clear();
       }
     // Transition Information
-    } else if (inString == "#T") {
+    } else if (inLine == "#T") {
+      getline(inFile, inLine);
+      inStream << inLine;
       int sCount;
-      inFile >> sCount;       // Get number of transitions
+      inStream >> sCount;       // Get number of transitions
+      inStream << "";
+      inStream.clear();
       for (int i=0; i<sCount; i++) {
+        getline(inFile, inLine);
+        inStream << inLine;
         vector <double> sTrans;
         for (int j=0; j<26; j++) {
-          inFile >> inValue;
+          inStream >> inValue;
           sTrans.push_back(inValue);
         }
         fNucleus->PushTrans(sTrans);
         sTrans.clear();
-      }
+        inStream << "";
+        inStream.clear();
+      } 
       
       fRootTree->Fill();
-      delete fNucleus;
+    } else {
+      cout << "Unexpected error" << endl;
+      break;
     }
 
   }
