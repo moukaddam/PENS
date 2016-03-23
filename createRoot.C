@@ -104,7 +104,7 @@ int createRoot() {
   
   // Create root file and tree
   TFile fRootFile("pensExtract.root","RECREATE");
-  TTree *fRootTree = new TTree("T","Nuclear Systematics");
+  TTree *fRootTree = new TTree("NS","Nuclear Systematics");
   // .. and create a new branch for each data member of event object
   Int_t fSplit = 1; // multi-branch -- what?
   Int_t fSize = 64000;
@@ -115,9 +115,23 @@ int createRoot() {
  
   // Read in data
   ifstream inFile("collate.dat");
-       
+  string inString;
+  
   while (true) {
     // Read from file
+    getline(inFile, inString);
+    if (inFile.eof()) break;
+    
+    if (inString == "#N")
+      inFile >> inA >> inZ >> inN >> inB >> inBu >> inBl >> inQ;
+    else if (inString == "#L") {
+      inFile >> inEnergy >> inSpin >> inCount >> inLife >> inLifeu >> inLifel;
+      vector <Double_t> sVector
+      
+    cout << inA << "\t" << inZ << endl;
+    
+
+    /*
     inFile >> inA >> inZ >> inN >> inB >> inBu >> inBl >> inQ
            >> inEnergy0n2 >> inEnergy2n1 >> inEnergy4n1 >> inEnergy2n2
            >> inTransSpinPa >> inTransCountPa >> inTransSpinDa >> inTransCountDa
@@ -128,7 +142,9 @@ int createRoot() {
 
     if (inFile.eof()) break;
     
-    cout << fCounter << "\t" << inA << "\t" << inZ << "\t" << inTransEnergy  << endl; //"\t" << inRho << endl;
+    cout << fCounter << "\t" << inA << "\t" << inZ << "\t" << inTransEnergy  << endl; */
+    
+    /*
     if (inA == 0) break;
         
 
@@ -155,15 +171,15 @@ int createRoot() {
       fNucleus->Setq2( inq2, inq2e, inq2e );
       fNucleus->SetRho(inRho, inRhou, inRhol);
       fNucleus->SetX(inX, inXe, inXe);
-        
+*/        
     fCounter++;
             
-    fRootTree->Fill();
-    delete fNucleus;
+  //  fRootTree->Fill();
+   // delete fNucleus;
 
   }
   inFile.close();
-  fRootTree->Write();
+  //fRootTree->Write();
   fRootFile.Close();
 
   return 0;

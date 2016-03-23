@@ -113,8 +113,9 @@ try:
   fReader = csv.reader(fInput)
   fOverwrite = list(fReader)
   print "... SUCCESS!"
-except urllib.request.URLError:
+except urllib2.URLError:
   print "... FAILURE!"
+  fOverwrite = []
 
 fNull = ["0.0", "0.0", "0.0"]
 
@@ -159,8 +160,8 @@ for i in os.listdir(os.getcwd() + "/data"):
   # Read through each line in the file, firstly looking for energy levels
   for fLine in fInput:
     
-    #if len(fLvlEnergy) == 200:               # Limit of the first x energy levels
-    #  break
+    if len(fLvlEnergy) == 20:               # Limit of the first x energy levels
+      break
     if fLine[5:8] != "  L" and fLine[5:8] != "  G" and fLine[5:8] != "B G":
       continue                              # Skip everything that isn't energy level, transition, transition details
 
@@ -177,7 +178,7 @@ for i in os.listdir(os.getcwd() + "/data"):
         sCount = fLvlSpin.count(sSpin)
         fLvlCount.append(str(sCount))
       else:                                 #  If not J+ format (J<10) then subbed with char
-        fLvlSpin.append("xx")
+        fLvlSpin.append("x")
         fLvlCount.append("x")
       
       sList = []                            # Halflife
@@ -346,14 +347,26 @@ for i in os.listdir(os.getcwd() + "/data"):
  
   fBeta = ["0.0", "0.0", "0.0", "0.0"]
   fOverList = []
+  # Find the nucleus
   for row, i in enumerate(fOverwrite):
     if i[0] == str(nucMass) and i[1] == str(nucProton):
       fBeta = [fOverwrite[row][3], fOverwrite[row][4], fOverwrite[row][5], fOverwrite[row][6]]
       fOverList.append(row)
  
   # Write to file
+  fOutput.write("#N\n")
+  fOutput.write(str(nucMass) + " " + str(nucProton) + " " + str(nucMass-nucProton))
+  fOutput.write(" " + fBeta[0] + " " + fBeta[1] + " " + fBeta[2] + " " + fBeta[3] + "\n")
+  
+  fOutput.write("#L\n")
+  fOutput.write(str(len(fLvlEnergy)) + "\n")
+  for i in range(0, len(fLvlEnergy)):
+    fOutput.write(str(fLvlEnergy[i]) + " " + fLvlSpin[i] + " " + str(fLvlCount[i]) + " " + fLvlHalflife[i][0] + " " + fLvlHalflife[i][1] + " " + fLvlHalflife[i][2] + "\n")
+
+  fOutput.write("#T\n")
+  fOutput.write(str(len(fTrsSpinPa)) + "\n")
   for i in range(0, len(fTrsSpinPa)):
-    # Find the nucleus
+    
     sQSq = [0.0, 0.0]
     sRho = [0.0, 0.0, 0.0]
     sX = [0.0, 0.0]
@@ -374,10 +387,8 @@ for i in os.listdir(os.getcwd() + "/data"):
         fOverList.pop(j)
         break
   
-    fOutput.write(str(nucMass) + " " + str(nucProton) + " " + str(nucMass-nucProton))
-    fOutput.write(" " + fBeta[0] + " " + fBeta[1] + " " + fBeta[2] + " " + fBeta[3])
-    fOutput.write(" " + fEneS0 + " " + fEneF2 + " " + fEneF4 + " " + fEneS2)
-    fOutput.write(" " + fTrsSpinPa[i] + " " + fTrsCountPa[i] + " " + fTrsSpinDa[i] + " " + fTrsCountDa[i])
+    
+    fOutput.write(fTrsSpinPa[i] + " " + fTrsCountPa[i] + " " + fTrsSpinDa[i] + " " + fTrsCountDa[i])
     fOutput.write(" " + fTrsEnergy[i])
     fOutput.write(" " + fTrsLife[i][0] + " " + fTrsLife[i][1] + " " + fTrsLife[i][2])
     fOutput.write(" " + fTrsBE2[i][0] + " " + fTrsBE2[i][1] + " " + fTrsBE2[i][2])
@@ -390,10 +401,7 @@ for i in os.listdir(os.getcwd() + "/data"):
 
   # Write any transitions left in 'overwrite'.  Missing components need to be calculated
   for i in range(0, len(fOverList)):
-    fOutput.write(str(nucMass) + " " + str(nucProton) + " " + str(nucMass-nucProton))
-    fOutput.write(" " + fBeta[0] + " " + fBeta[1] + " " + fBeta[2] + " " + fBeta[3])
-    fOutput.write(" " + fEneS0 + " " + fEneF2 + " " + fEneF4 + " " + fEneS2)
-    fOutput.write(" " + fOverwrite[fOverList[i]][7] + " " + fOverwrite[fOverList[i]][8] + " " + fOverwrite[fOverList[i]][9] + " " + fOverwrite[fOverList[i]][10])
+    fOutput.write(fOverwrite[fOverList[i]][7] + " " + fOverwrite[fOverList[i]][8] + " " + fOverwrite[fOverList[i]][9] + " " + fOverwrite[fOverList[i]][10])
     fOutput.write(" " + "0.0") # Transition energy is missing in online spreadsheet
     fOutput.write(" 0.0 0.0 0.0") # Parent halflife is missing
     fOutput.write(" " + fOverwrite[fOverList[i]][11] + " " + fOverwrite[fOverList[i]][12] + " " + fOverwrite[fOverList[i]][13])
@@ -403,5 +411,4 @@ for i in os.listdir(os.getcwd() + "/data"):
     fOutput.write(" " + fOverwrite[fOverList[i]][19] + " " + fOverwrite[fOverList[i]][20] + " " + fOverwrite[fOverList[i]][21])
     fOutput.write(" " + fOverwrite[fOverList[i]][22] + " " + fOverwrite[fOverList[i]][23])
     fOutput.write("\n")
-  
   
