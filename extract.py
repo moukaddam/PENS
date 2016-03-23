@@ -370,7 +370,7 @@ for i in os.listdir(os.getcwd() + "/data"):
         sParity = "-1"
       fOutput.write(" " + fLvlSpin[i].translate(None, '+-') + " " + sParity + " " + fLvlCount[i])
     else:
-      fOutput.write("0 0 0")
+      fOutput.write(" 0 0 0")
     fOutput.write(" " + fLvlHalflife[i][0] + " " + fLvlHalflife[i][1] + " " + fLvlHalflife[i][2] + "\n")
 
   fOutput.write("#T\n")
