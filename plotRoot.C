@@ -45,17 +45,17 @@ int plotRoot() {
       Int_t sFinalSpin = tTrans[i][3];
       Int_t sFinalParity = tTrans[i][4]; // + is +1, - is -1, tentative/unknown is 0
       Int_t sFinalCount = tTrans[i][5];
-      /*
+      
       Double_t sTranEnergy = tTrans[i][6]; // Transition Energy [keV]
       
       Double_t sTransLife = tTrans[i][7]; // Parent Half-life [ps]
       Double_t sTransLifeU = tTrans[i][8];
       Double_t sTransLifeL = tTrans[i][9];
-      */
+      
       Double_t sTransBE2 = tTrans[i][10]; // B(E2) [W.u.]
       Double_t sTransBE2u = tTrans[i][11];
       Double_t sTransBE2l = tTrans[i][12];    
-      /*
+      
       Double_t sTransBM1 = tTrans[i][13]; // B(M1) [W.u.]
       Double_t sTransBM1u = tTrans[i][14];
       Double_t sTransBM1l = tTrans[i][15];    
@@ -75,16 +75,19 @@ int plotRoot() {
       Double_t sTransX = tTrans[i][24]; // X = B(E2)/B(E0)
       Double_t sTransXu = tTrans[i][25];
       Double_t sTransXl = tTrans[i][25];    
-      */
+      
+      Double_t sAlpha = tTrans[i][26];
+      Double_t sAlphau = tTrans[i][27];
+      Double_t sAlphal = tTrans[i][28];
 
-      if (sTransBE2 != 0 && sNeutron==34 && sFinalSpin==2 && sFinalCount==1) {  //  This is where you would define conditions
+      if (sTransBE2 != 0 && sNeutron==34 && sInitSpin == 2 && sFinalSpin==2) {  //  This is where you would define conditions
         fX.push_back(sMass);
         fXU.push_back(0.);
         fXL.push_back(0.);
         
-        fY.push_back(sTransBE2);
-        fYU.push_back(sTransBE2u);
-        fYL.push_back(sTransBE2l);
+        fY.push_back(sAlpha);
+        fYU.push_back(sAlphau);
+        fYL.push_back(sAlphal);
       }
     }
     /*
@@ -119,12 +122,11 @@ int plotRoot() {
   Int_t fSize = fX.size();
   TGraphAsymmErrors *fPlot = new TGraphAsymmErrors(fSize, &fX[0], &fY[0], &fXL[0], &fXU[0], &fYL[0], &fYU[0]);
   fPlot->SetTitle("");
-  fPlot->GetXaxis()->SetTitle("B(E2) [W.u.]");
-  fPlot->GetYaxis()->SetTitle("Mass Number");
+  fPlot->GetXaxis()->SetTitle("Mass Number");
+  fPlot->GetYaxis()->SetTitle("ICC_{TOTAL}");
   fPlot->SetMarkerStyle(kCircle);
   fPlot->SetMarkerSize(0.5);
   fPlot->Draw("AP");
 
   return 0;
 }
-

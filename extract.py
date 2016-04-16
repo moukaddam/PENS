@@ -121,16 +121,16 @@ def gGetIndex(fFileName):
   return sMass + sElement
   
 # Import google csv in to overwrite list
-#print "Reading in from online spreadsheet..."
-#try:
-#  fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
-#  fInput = urllib2.urlopen(fCSVURL)
-#  fReader = csv.reader(fInput)
-##  fOverwrite = list(fReader)
-#  print "... SUCCESS!"
-#except urllib2.URLError:
-#  print "... FAILURE!"
-fOverwrite = []
+print "Reading in from online spreadsheet..."
+try:
+  fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
+  fInput = urllib2.urlopen(fCSVURL)
+  fReader = csv.reader(fInput)
+  fOverwrite = list(fReader)
+  print "... SUCCESS!"
+except urllib2.URLError:
+  print "... FAILURE!"
+  fOverwrite = []
 
 fNull = ["0.0", "0.0", "0.0"]
 
@@ -152,6 +152,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
   fTrsSpinDa = []  # J+ of "daughter" state
   fTrsCountDa = [] # n of "daughter"
   fTrsLife = []
+  fTrsAlpha = []
   fTrsQSq = []
   fTrsRho = []
   fTrsX =[]
@@ -162,7 +163,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
   nucName = fInput.read(2)
   nucProton = gReturnProton(nucName.strip())
   
-  print "Reading in " + str(nucMass) + nucName
+  #print "Reading in " + str(nucMass) + nucName
  
   sTrsBM1 = []
   sTrsBE2 = []
@@ -180,7 +181,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
     
     #if len(fLvlEnergy) == 20:               # Limit of the first x energy levels
     #  break
-    if fLine[5:8] != "  L" and fLine[5:8] != "  G" and fLine[5:8] != "B G":
+    if fLine[5:8] != "  L" and fLine[5:8] != "  G" and fLine[5:8] != "B G" and fLine[5:8] != "S G":
       continue                              # Skip everything that isn't energy level, transition, transition details
 
     if fLine[5:8] == "  L":                 # Energy level 
@@ -259,6 +260,10 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
           fTrsLife.append(sTrsLife)
         else:
           fTrsLife.append(fNull)
+        if sTrsAlpha:
+          fTrsAlpha.append(sTrsAlpha)
+        else:
+          fTrsAlpha.append(fNull)
         if sTrsBE2:
           fTrsBE2.append(sTrsBE2)
         else:
@@ -277,6 +282,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
       sTrsBE2 = fNull
       sTrsMixing = fNull
       sTrsLife = fNull
+      sTrsAlpha = fNull
       sTrsEnergy = 0.0
       sTrsSpinPa = ""
       sTrsCountPa = ""
@@ -326,11 +332,31 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
           sTrsBE2 = gReturnB(sLine)
         elif sLine[:2] == "M1":
           sTrsBM1 = gReturnB(sLine)
-
+          
+    elif fLine[5:8] == "S G":                 # alpha values
+      if "CC=" in fLine:
+        # Only interested in total (not K, L, etc)
+        sVector = []
+        if "$" in fLine:
+          sString = fLine[fLine.index("=")+1:fLine.index("$")]
+        else:
+          sString = fLine[fLine.index("=")+1:].strip()
+        if " " in sString:
+          sValue = sString[:sString.index(" ")]
+          sError = sString[sString.index(" "):]
+          sUpper, sLower = gMatchError(sValue, sError, sError)
+        else:
+          sValue = sString.strip()
+          sUpper = 0.0
+          sLower = 0.0
+        sVector.append(sValue)
+        sVector.append(sUpper)
+        sVector.append(sLower) # for the sake of consistency
+        sTrsAlpha = sVector      
           
   fInput.close()
   
-  print " Read in", len(fLvlEnergy), "energy levels and", len(fTrsSpinPa), "transitions"
+  #print " Read in", len(fLvlEnergy), "energy levels and", len(fTrsSpinPa), "transitions"
 
   # This chunk will find the energy of ..
   fEneS0 = "0.0"
@@ -450,6 +476,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
     fOutput.write(" " + str(fTrsQSq[i][0]) + " " + str(fTrsQSq[i][1]))
     fOutput.write(" " + str(fTrsRho[i][0]) + " " + str(fTrsRho[i][1]) + " " + str(fTrsRho[i][2]))
     fOutput.write(" " + str(fTrsX[i][0]) + " " + str(fTrsX[i][1]))
+    fOutput.write(" " + str(fTrsAlpha[i][0]) + " " + str(fTrsAlpha[i][1]) + " " + str(fTrsAlpha[i][2]))
     fOutput.write("\n")
 
   # Write any transitions left in 'overwrite'.  Missing components need to be calculated
@@ -480,5 +507,6 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
     fOutput.write(" " + fOverwrite[fOverList[i]][17] + " " + fOverwrite[fOverList[i]][18])
     fOutput.write(" " + fOverwrite[fOverList[i]][19] + " " + fOverwrite[fOverList[i]][20] + " " + fOverwrite[fOverList[i]][21])
     fOutput.write(" " + fOverwrite[fOverList[i]][22] + " " + fOverwrite[fOverList[i]][23])
+    fOutput.write(" 0.0 0.0 0.0") # No alpha either
     fOutput.write("\n")
   

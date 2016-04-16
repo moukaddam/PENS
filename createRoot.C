@@ -121,7 +121,7 @@ int createRoot() {
         getline(inFile, inLine);
         inStream << inLine;
         vector <double> sTrans;
-        for (int j=0; j<26; j++) {
+        for (int j=0; j<29; j++) {
           inStream >> inValue;
           sTrans.push_back(inValue);
         }
@@ -133,7 +133,7 @@ int createRoot() {
       
       fRootTree->Fill();
     } else {
-      cout << "Unexpected error" << endl;
+      cout << "Unexpected error:\n\t" << inLine << endl;
       break;
     }
 
