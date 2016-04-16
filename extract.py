@@ -105,23 +105,38 @@ def gReturnB(fString):
     print fString
   return sVector
   
+def gGetIndex(fFileName):
+  # Split name into number and name
+  sElement = fFileName.strip('0123456789')
+  sMass = str(fFileName[:len(fFileName)-len(sElement)])
+  if len(sMass) == 1:
+    sMass = "0" + sMass
+  if len(sMass) == 2:
+    sMass = "0" + sMass
+  sElement = str(gReturnProton(sElement))
+  if len(sElement) == 1:
+    sElement = "0" + sElement
+  if len(sElement) == 2:
+    sElement = "0" + sElement
+  return sMass + sElement
+  
 # Import google csv in to overwrite list
-print "Reading in from online spreadsheet..."
-try:
-  fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
-  fInput = urllib2.urlopen(fCSVURL)
-  fReader = csv.reader(fInput)
-  fOverwrite = list(fReader)
-  print "... SUCCESS!"
-except urllib2.URLError:
-  print "... FAILURE!"
-  fOverwrite = []
+#print "Reading in from online spreadsheet..."
+#try:
+#  fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
+#  fInput = urllib2.urlopen(fCSVURL)
+#  fReader = csv.reader(fInput)
+##  fOverwrite = list(fReader)
+#  print "... SUCCESS!"
+#except urllib2.URLError:
+#  print "... FAILURE!"
+fOverwrite = []
 
 fNull = ["0.0", "0.0", "0.0"]
 
 # In turn, open each file within the data folder
 fOutput = open('collate.dat', 'w') 
-for i in os.listdir(os.getcwd() + "/data"):
+for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
 
   fLvlEnergy = []
   fLvlSpin = []
