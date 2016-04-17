@@ -163,7 +163,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
   nucName = fInput.read(2)
   nucProton = gReturnProton(nucName.strip())
   
-  #print "Reading in " + str(nucMass) + nucName
+  print "Reading in " + str(nucMass) + nucName, nucProton
  
   sTrsBM1 = []
   sTrsBE2 = []
@@ -189,8 +189,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
         continue
       #print(repr(fLine[9:19]))
       fLvlEnergy.append(float(fLine[9:19])) # Energy, omitting error 
-      sSpin = fLine[21:25].strip()
-
+      sSpin = fLine[21:30].strip()
       # Check for definitive spin/parity assignment (must have + or -, and must be a number without either of those characters)
       if any(sChar in sSpin for sChar in ["+", "-"]) and gCheckNumber(sSpin.translate(None, '+-')):
         fLvlSpin.append(sSpin)
@@ -352,11 +351,14 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
         sVector.append(sValue)
         sVector.append(sUpper)
         sVector.append(sLower) # for the sake of consistency
-        sTrsAlpha = sVector      
+        sTrsAlpha = sVector  
+#    if "|r{+2}" in fLine and fGroundRead:
+#      print fLvlEnergy[-1], sTrsEnergy, sTrsSpinPa, sTrsCountPa, sTrsSpinDa, sTrsCountDa
+#      print fLine    
           
   fInput.close()
   
-  #print " Read in", len(fLvlEnergy), "energy levels and", len(fTrsSpinPa), "transitions"
+  print " Read in", len(fLvlEnergy), "energy levels and", len(fTrsSpinPa), "transitions"
 
   # This chunk will find the energy of ..
   fEneS0 = "0.0"
