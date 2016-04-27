@@ -333,7 +333,12 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
           sTrsBM1 = gReturnB(sLine)
           
     elif fLine[5:8] == "S G":                 # alpha values
+      if "NC" in fLine and not "CC" in fLine:
+        sTrsAlpha = fNull  #Remove last CC
       if "CC=" in fLine:
+        if "CC" in fLine and "NC" in fLine:
+          continue
+        
         # Only interested in total (not K, L, etc)
         sVector = []
         if "$" in fLine:
