@@ -11,16 +11,16 @@
 using namespace std;
 
 class cNucleus {
+
+  public:
  
-  int nMass, nProton, nNeutron;
-  double nQuadrupole;
-  // [0] = value, [1] = value+upper error, [2] = value-lower error
-  vector <double> nDeformation;
-  vector < vector <double >> nLevels;
-  vector < vector <double >> nTransitions;
- 
-  public:      
-        
+    int nMass, nProton, nNeutron;
+    double nQuadrupole;
+    // [0] = value, [1] = value+upper error, [2] = value-lower error
+    vector <double> nDeformation;
+    vector < vector <double >> nLevels;
+    vector < vector <double >> nTransitions;
+       
     void SetMass(int sMass) {nMass = sMass;}
     void SetProton(int sProton) {nProton = sProton;}
     void SetNeutron(int sNeutron) {nNeutron = sNeutron;}
