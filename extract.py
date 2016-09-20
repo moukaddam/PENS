@@ -11,12 +11,16 @@ import re, math, os, csv, requests, urllib2
 def gReturnProton(fName):
   # Function to return proton number from name
   return {
-    'HE': 2, 'BE': 4, 'C': 6, 'O': 8, 'NE': 10, 'MG': 12, 'SI': 14, 'S': 16, 'AR': 18,
-    'CA': 20, 'TI': 22, 'CR': 24, 'FE': 26, 'NI': 28, 'ZN': 30, 'GE': 32, 'SE': 34,
-    'KR': 36, 'SR': 38, 'ZR': 40, 'MO': 42, 'RU': 44, 'PD': 46, 'CD': 48, 'SN': 50,
-    'TE': 52, 'XE': 54, 'BA': 56, 'CE': 58, 'ND': 60, 'SM': 62, 'GD': 64, 'DY': 66,
-    'ER': 68, 'YB': 70, 'HF': 72,  'W': 74, 'OS': 76, 'PT': 78, 'HG': 80, 'PB': 82,
-    'PO': 84, 'RN': 86, 'RA': 88, 'TH': 90,  'U': 92, 'PU': 94, 'CM': 96, 'CF': 98
+    'H': 1, 'HE': 2, 'LI': 3, 'BE': 4, 'B': 5, 'C': 6, 'N': 7, 'O': 8, 'F': 9, 
+    'NE': 10, 'NA': 11, 'MG': 12, 'AL': 13, 'SI': 14, 'P': 15,  'S': 16,  'CL': 17, 'AR': 18, 'K': 19,
+    'CA': 20, 'SC': 21, 'TI': 22, 'V': 23,  'CR': 24, 'MN': 25, 'FE': 26, 'CO': 27, 'NI': 28, 'CU': 29,
+    'ZN': 30, 'GA': 31, 'GE': 32, 'AS': 33, 'SE': 34, 'BR': 35, 'KR': 36, 'RB': 37, 'SR': 38, 'Y': 39,
+    'ZR': 40, 'NB': 41, 'MO': 42, 'TC': 43, 'RU': 44, 'RH': 45, 'PD': 46, 'AG': 47, 'CD': 48, 'IN': 49, 
+    'SN': 50, 'SB': 51, 'TE': 52, 'I': 53, 'XE': 54, 'CS': 55, 'BA': 56, 'LA': 57, 'CE': 58, 'PR': 59, 
+    'ND': 60, 'PM': 61, 'SM': 62, 'EU': 63, 'GD': 64, 'TB': 65, 'DY': 66, 'HO': 67, 'ER': 68, 'TM': 69, 
+    'YB': 70, 'LU': 71, 'HF': 72, 'TA': 73, 'W': 74, 'RE': 75, 'OS': 76, 'IR': 77, 'PT': 78, 'AU': 79, 
+    'HG': 80, 'TL': 81, 'PB': 82, 'BI': 83, 'PO': 84, 'AT': 85, 'RN': 86, 'FR': 87, 'RA': 88, 'AC': 89, 
+    'TH': 90, 'PA': 91,  'U': 92, 'NP': 93, 'PU': 94, 'AM': 95, 'CM': 96, 'BK': 97, 'CF': 98, 'ES': 99
   }.get(fName, "00")
          
 def gReturnTime(fUnit):
@@ -26,7 +30,7 @@ def gReturnTime(fUnit):
   }.get(fUnit, "??")
   
 def gCheckNumber(fChar):
-  # Function to check if string can be converted to integer
+  # Function to check if string can be converted to a number
   try:
     float(fChar)
     return True
@@ -121,16 +125,16 @@ def gGetIndex(fFileName):
   return sMass + sElement
   
 # Import google csv in to overwrite list
-print "Reading in from online spreadsheet..."
-try:
-  fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
-  fInput = urllib2.urlopen(fCSVURL)
-  fReader = csv.reader(fInput)
-  fOverwrite = list(fReader)
-  print "... SUCCESS!"
-except urllib2.URLError:
-  print "... FAILURE!"
-  fOverwrite = []
+#print "Reading in from online spreadsheet..."
+#try:
+#  fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
+#  fInput = urllib2.urlopen(fCSVURL)
+#  fReader = csv.reader(fInput)
+#  fOverwrite = list(fReader)
+#  print "... SUCCESS!"
+#except urllib2.URLError:
+#  print "... FAILURE!"
+fOverwrite = []
 
 fNull = ["0.0", "0.0", "0.0"]
 
@@ -191,20 +195,20 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
       fLvlEnergy.append(float(fLine[9:19])) # Energy, omitting error 
       sSpin = fLine[21:30].strip()
       # Check for definitive spin/parity assignment (must have + or -, and must be a number without either of those characters)
-      if any(sChar in sSpin for sChar in ["+", "-"]) and gCheckNumber(sSpin.translate(None, '+-')):
+      if any(sChar in sSpin for sChar in ["+", "-"]) and gCheckNumber(sSpin.translate(None, '+-/')):
         fLvlSpin.append(sSpin)
         sCount = fLvlSpin.count(sSpin)
         fLvlCount.append(str(sCount))
-      else:                                 #  If not J+ format (J<10) then subbed with char
+      else:                                 #  If tentative then subbed with char
         fLvlSpin.append("0")
         fLvlCount.append("0")
       
       sList = []                            # Halflife
-      if not fGroundRead:         # (STABLE)
-        sHalflife = ["0.0", "0.0", "0.0"]
+      sLifeString = fLine[39:49].strip() 
+      if "STABLE" in sLifeString:         # (STABLE)
+        sHalflife = ["-1.0", "0.0", "0.0"] # -1.0 ps for stable
         fLvlHalflife.append(sHalflife)
       else:
-        sLifeString = fLine[39:49].strip()   
         sUnit = gReturnTime(sLifeString[-2:].strip())
         if sUnit != "??":
           sList.append(str(float(sLifeString[:-2].strip()) * sUnit))
@@ -365,40 +369,9 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
   
   print " Read in", len(fLvlEnergy), "energy levels and", len(fTrsSpinPa), "transitions"
 
-  # This chunk will find the energy of ..
-  fEneS0 = "0.0"
-  fEneF2 = "0.0"
-  fEneF4 = "0.0"
-  fEneS2 = "0.0"
-  inSec0 = -1
-  try:
-    for j in xrange(2):           # .. the second 0+
-      inSec0 = fLvlSpin.index("0+", inSec0 + 1)
-    fEneS0 = str(fLvlEnergy[inSec0])
-  except ValueError:
-    fEneS0 = "0.0"
-  try:
-    inFir2 = fLvlSpin.index("2+") # .. the first 2+
-    fEneF2 = str(fLvlEnergy[inFir2])
-  except ValueError:
-    fEneF2 = "0.0"
-  try:
-    inFir4 = fLvlSpin.index("4+") # .. the first 4+
-    fEneF4 = str(fLvlEnergy[inFir4])
-  except ValueError:
-    fEneF4 = "0.0"
-  inSec2 = -1
-  try:
-    for j in xrange(2):           # .. the second 2+
-      inSec2 = fLvlSpin.index("2+", inSec2 + 1)
-      fEneS2 = str(fLvlEnergy[inSec2])
-  except:
-    fEneS2 = "0.0"
-  
- 
   fBeta = ["0.0", "0.0", "0.0", "0.0"]
   fOverList = []
-  # Find the nucleus
+  # Find the nucleus in the overwrite array, replace beta information
   for row, i in enumerate(fOverwrite):
     if i[0] == str(nucMass) and i[1] == str(nucProton):
       fBeta = [fOverwrite[row][3], fOverwrite[row][4], fOverwrite[row][5], fOverwrite[row][6]]
