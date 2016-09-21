@@ -145,13 +145,16 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
 
   fLvlEnergy = []
   fLvlSpin = []
+  fLvlSpinTent = []
   fLvlCount = []
+  fLvlCountTent = []
   fLvlHalflife = []
 
   fTrsBM1 = []
   fTrsBE2 = []
   fTrsMixing = []
   fTrsEnergy = []
+  fTrsBranch = []
   fTrsIndPa = []
   fTrsIndDa = []
   fTrsLife = []
@@ -171,6 +174,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
   sTrsBM1 = []
   sTrsBE2 = []
   sTrsMixing = []
+  sTrsBranch = []
   sTrsEnergy = 0.0
   
   fGroundRead = False
@@ -188,15 +192,35 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
         continue
       #print(repr(fLine[9:19]))
       fLvlEnergy.append(float(fLine[9:19])) # Energy, omitting error 
-      sSpin = fLine[21:30].strip()
+      sSpin = fLine[21:36].strip()
       # Check for definitive spin/parity assignment (must have + or -, and must be a number without either of those characters)
       if any(sChar in sSpin for sChar in ["+", "-"]) and gCheckNumber(sSpin.translate(None, '+-/')):
         fLvlSpin.append(sSpin)
         sCount = fLvlSpin.count(sSpin)
         fLvlCount.append(str(sCount))
-      else:                                 #  If tentative then subbed with char
-        fLvlSpin.append("0")
-        fLvlCount.append("0")
+        # Must also add these to the 'tentative list' so that an accurate count is made
+        fLvlSpinTent.append(sSpin)
+        sCount = fLvlSpinTent.count(sSpin)
+        fLvlCountTent.append(str(sCount))
+      elif len(sSpin) != 0:
+        sParity = ""
+        if any(sChar in sSpin[-1] for sChar in ["+", "-"]):
+          sParity = sSpin[-1]        
+        sSpin = sSpin.translate(None, '()')
+        if "," in sSpin:
+          sSpin = sSpin[0:sSpin.find(",")] + sParity
+        fLvlSpinTent.append(sSpin)
+        sCount = fLvlSpinTent.count(sSpin)
+        fLvlCountTent.append(str(sCount))
+        # Must also fill the 'confirmed list' with unknowns, to avoid mismatched lists
+        fLvlSpin.append("-1")
+        fLvlCount.append("-1")
+      else:                                 #  If completly unknown, make -1
+        print sSpin
+        fLvlSpin.append("-1")
+        fLvlCount.append("-1")
+        fLvlSpinTent.append("-1")
+        fLvlCountTent.append("-1")
       
       sList = []                            # Halflife
       sLifeString = fLine[39:49].strip() 
@@ -252,10 +276,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
         fTrsIndPa.append(sIndexPa)
         fTrsIndDa.append(sIndexDa)
         fTrsEnergy.append(str(sTrsEnergy))
-        if sTrsLife:
-          fTrsLife.append(sTrsLife)
-        else:
-          fTrsLife.append(fNull)
+        fTrsBranch.append(sTrsBranch)
         if sTrsAlpha:
           fTrsAlpha.append(sTrsAlpha)
         else:
@@ -277,11 +298,17 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
       sTrsBM1 = fNull
       sTrsBE2 = fNull
       sTrsMixing = fNull
-      sTrsLife = fNull
       sTrsAlpha = fNull
       sTrsEnergy = 0.0
+      sTrsBranch = ["0.0", "0.0"]
        
-      sTrsEnergy = float(fLine[9:18].strip())
+      sTrsEnergy = float(fLine[9:18].strip())  
+      if len(fLine[22:26].strip()) != 0:
+        sTrsBranch = [fLine[22:26].strip(), "0.0"]
+        if len(fLine[29:31].strip()) != 0 and gCheckNumber(fLine[29:31].strip()):
+          sBrErr = fLine[29:31].strip()
+          sA, sB = gMatchError(fLine[22:26].strip(), sBrErr, sBrErr)
+          sTrsBranch = [fLine[22:26].strip(), sA]
       sFinEnergy = min(fLvlEnergy, key=lambda x:abs(x-(fLvlEnergy[-1] - sTrsEnergy))) # Find final state
       sIndexDa = fLvlEnergy.index(sFinEnergy)
       sIndexPa = len(fLvlEnergy) - 1
@@ -370,15 +397,26 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
   fOutput.write(str(len(fLvlEnergy)) + "\n")
   for i in range(0, len(fLvlEnergy)):
     fOutput.write(str(fLvlEnergy[i]))
-    if any(sChar in fLvlSpin[i] for sChar in ["+", "-"]):
-      sParity = ""
-      if fLvlSpin[i][-1] == "+":
-        sParity = "1"
-      else:
-        sParity = "-1"
-      fOutput.write(" " + fLvlSpin[i].translate(None, '+-') + " " + sParity + " " + fLvlCount[i])
+    sParity = "0"
+    if fLvlSpin[i][-1] == "+":
+      sParity = "1"
+    elif fLvlSpin[i][-1] == "-":
+      sParity = "-1"
+    if fLvlSpin[i] == "-1":
+      fOutput.write(" " + fLvlSpin[i] + " " + sParity + " " + fLvlCount[i])
     else:
-      fOutput.write(" 0 0 0")
+      fOutput.write(" " + fLvlSpin[i].translate(None, '+-') + " " + sParity + " " + fLvlCount[i])
+    
+    sParity = "0"
+    if fLvlSpinTent[i][-1] == "+":
+      sParity = "1"
+    elif fLvlSpinTent[i][-1] == "-":
+      sParity = "-1"
+    if fLvlSpinTent[i] == "-1":
+      fOutput.write(" " + fLvlSpinTent[i] + " " + sParity + " " + fLvlCountTent[i])
+    else:
+      fOutput.write(" " + fLvlSpinTent[i].translate(None, '+-') + " " + sParity + " " + fLvlCountTent[i])
+
     fOutput.write(" " + fLvlHalflife[i][0] + " " + fLvlHalflife[i][1] + " " + fLvlHalflife[i][2] + "\n")
 
   # Overwrite values
@@ -415,6 +453,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
   for i in range(0, len(fTrsIndPa)):
     
     fOutput.write(str(fTrsIndPa[i]) + " " + str(fTrsIndDa[i]))
+    fOutput.write(" " + fTrsBranch[i][0] + " " + fTrsBranch[i][1])
     fOutput.write(" " + fTrsBE2[i][0] + " " + fTrsBE2[i][1] + " " + fTrsBE2[i][2])
     fOutput.write(" " + fTrsBM1[i][0] + " " + fTrsBM1[i][1] + " " + fTrsBM1[i][2])
     fOutput.write(" " + fTrsMixing[i][0] + " " + fTrsMixing[i][1] + " " + fTrsMixing[i][2])
@@ -442,6 +481,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
           fOutput.write(str(k))
         c += 1
 
+    fOutput.write(" 0.0 0.0") # No branching ratio in online spreadsheet
     fOutput.write(" " + fOverwrite[fOverList[i]][11] + " " + fOverwrite[fOverList[i]][12] + " " + fOverwrite[fOverList[i]][13])
     fOutput.write(" " + fOverwrite[fOverList[i]][14] + " " + fOverwrite[fOverList[i]][15] + " " + fOverwrite[fOverList[i]][16])
     fOutput.write(" 0.0 0.0 0.0") # No mixing either
