@@ -125,16 +125,17 @@ def gGetIndex(fFileName):
   return sMass + sElement
   
 # Import google csv in to overwrite list
-#print "Reading in from online spreadsheet..."
-#try:
-#  fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
-#  fInput = urllib2.urlopen(fCSVURL)
-#  fReader = csv.reader(fInput)
-#  fOverwrite = list(fReader)
-#  print "... SUCCESS!"
-#except urllib2.URLError:
-#  print "... FAILURE!"
-fOverwrite = []
+print "Reading in from online spreadsheet..."
+try:
+  fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
+  fInput = urllib2.urlopen(fCSVURL)
+  fReader = csv.reader(fInput)
+  fOverwrite = list(fReader)
+  print "... SUCCESS!"
+  print "... Read in", len(fOverwrite), "lines"
+except urllib2.URLError:
+  print "... FAILURE!"
+#fOverwrite = []
 
 fNull = ["0.0", "0.0", "0.0"]
 
@@ -151,10 +152,8 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
   fTrsBE2 = []
   fTrsMixing = []
   fTrsEnergy = []
-  fTrsSpinPa = []  # J+ of "parent" state
-  fTrsCountPa = [] # n of "parent"
-  fTrsSpinDa = []  # J+ of "daughter" state
-  fTrsCountDa = [] # n of "daughter"
+  fTrsIndPa = []
+  fTrsIndDa = []
   fTrsLife = []
   fTrsAlpha = []
   fTrsQSq = []
@@ -173,10 +172,6 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
   sTrsBE2 = []
   sTrsMixing = []
   sTrsEnergy = 0.0
-  sTrsSpinPa = ""
-  sTrsCountPa = ""
-  sTrsSpinDa = ""
-  sTrsCountDa = ""
   
   fGroundRead = False
 
@@ -254,10 +249,8 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
     
       # Encountering a new transition, write to vector the previous one
       if sTrsEnergy != 0:
-        fTrsSpinPa.append(sTrsSpinPa)
-        fTrsCountPa.append(sTrsCountPa)
-        fTrsSpinDa.append(sTrsSpinDa)
-        fTrsCountDa.append(sTrsCountDa)
+        fTrsIndPa.append(sIndexPa)
+        fTrsIndDa.append(sIndexDa)
         fTrsEnergy.append(str(sTrsEnergy))
         if sTrsLife:
           fTrsLife.append(sTrsLife)
@@ -287,20 +280,11 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
       sTrsLife = fNull
       sTrsAlpha = fNull
       sTrsEnergy = 0.0
-      sTrsSpinPa = ""
-      sTrsCountPa = ""
-      sTrsSpinDa = ""
-      sTrsCountDa = ""
        
       sTrsEnergy = float(fLine[9:18].strip())
       sFinEnergy = min(fLvlEnergy, key=lambda x:abs(x-(fLvlEnergy[-1] - sTrsEnergy))) # Find final state
-      sIndex = fLvlEnergy.index(sFinEnergy)
-      # Create transition ID
-      sTrsLife = fLvlHalflife[-1]
-      sTrsSpinPa = fLvlSpin[-1]
-      sTrsCountPa = fLvlCount[-1]
-      sTrsSpinDa = fLvlSpin[sIndex]
-      sTrsCountDa = fLvlCount[sIndex]
+      sIndexDa = fLvlEnergy.index(sFinEnergy)
+      sIndexPa = len(fLvlEnergy) - 1
       
       if fLine[41:55].strip():                # If there's a mixing ratio....
         sStr = ""
@@ -367,7 +351,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
           
   fInput.close()
   
-  print " Read in", len(fLvlEnergy), "energy levels and", len(fTrsSpinPa), "transitions"
+  print " Read in", len(fLvlEnergy), "energy levels and", len(fTrsIndPa), "transitions"
 
   fBeta = ["0.0", "0.0", "0.0", "0.0"]
   fOverList = []
@@ -399,7 +383,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
 
   # Overwrite values
   # Loop through each transition...
-  for i in range(0, len(fTrsSpinPa)):
+  for i in range(0, len(fTrsIndPa)):
     
     sQSq = [0.0, 0.0]
     sRho = [0.0, 0.0, 0.0]
@@ -407,7 +391,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
     # Loop through each overwrite row...
     for j in range(len(fOverList)):
       # Compare transition IDs    
-      listID = fTrsSpinPa[i] + fTrsCountPa[i] + fTrsSpinDa[i] + fTrsCountDa[i]
+      listID = fLvlSpin[fTrsIndPa[i]] + fLvlCount[fTrsIndPa[i]] + fLvlSpin[fTrsIndDa[i]] + fLvlCount[fTrsIndDa[i]]
       overID = fOverwrite[fOverList[j]][7] + fOverwrite[fOverList[j]][8] + fOverwrite[fOverList[j]][9] + fOverwrite[fOverList[j]][10]
       if listID == overID: #overwrite
         if fOverwrite[fOverList[j]][11] != 0:
@@ -427,29 +411,10 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
 
 
   fOutput.write("#T\n")
-  fOutput.write(str(len(fTrsSpinPa) + len(fOverList)) + "\n")
-  for i in range(0, len(fTrsSpinPa)):
+  fOutput.write(str(len(fTrsIndPa) + len(fOverList)) + "\n")
+  for i in range(0, len(fTrsIndPa)):
     
-    if any(sChar in fTrsSpinPa[i] for sChar in ["+", "-"]):
-      sParity = ""
-      if fTrsSpinPa[i][-1] == "+":
-        sParity = "1"
-      else:
-        sParity = "-1"
-      fOutput.write(fTrsSpinPa[i].translate(None, '+-') + " " + sParity + " " + fTrsCountPa[i])
-    else:
-      fOutput.write("0 0 0")
-    if any(sChar in fTrsSpinDa[i] for sChar in ["+", "-"]):
-      sParity = ""
-      if fTrsSpinDa[i][-1] == "+":
-        sParity = "1"
-      else:
-        sParity = "-1"
-      fOutput.write(" " + fTrsSpinDa[i].translate(None, '+-') + " " + sParity + " " + fTrsCountDa[i])
-    else:
-      fOutput.write(" 0 0 0")
-    fOutput.write(" " + fTrsEnergy[i])
-    fOutput.write(" " + fTrsLife[i][0] + " " + fTrsLife[i][1] + " " + fTrsLife[i][2])
+    fOutput.write(str(fTrsIndPa[i]) + " " + str(fTrsIndDa[i]))
     fOutput.write(" " + fTrsBE2[i][0] + " " + fTrsBE2[i][1] + " " + fTrsBE2[i][2])
     fOutput.write(" " + fTrsBM1[i][0] + " " + fTrsBM1[i][1] + " " + fTrsBM1[i][2])
     fOutput.write(" " + fTrsMixing[i][0] + " " + fTrsMixing[i][1] + " " + fTrsMixing[i][2])
@@ -461,26 +426,22 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
 
   # Write any transitions left in 'overwrite'.  Missing components need to be calculated
   for i in range(0, len(fOverList)):
-    if any(sChar in fOverwrite[fOverList[i]][7] for sChar in ["+", "-"]):
-      sParity = ""
-      if fOverwrite[fOverList[i]][7][-1] == "+":
-        sParity = "1"
-      else:
-        sParity = "-1"
-      fOutput.write(fOverwrite[fOverList[i]][7].translate(None, '+-') + " " + sParity + " " + fOverwrite[fOverList[i]][8])
-    else:
-      fOutput.write("0 0 0")
-    if any(sChar in fOverwrite[fOverList[i]][9] for sChar in ["+", "-"]):
-      sParity = ""
-      if fOverwrite[fOverList[i]][9][-1] == "+":
-        sParity = "1"
-      else:
-        sParity = "-1"
-      fOutput.write(" " + fOverwrite[fOverList[i]][9].translate(None, '+-') + " " + sParity + " " + fOverwrite[fOverList[i]][10])
-    else:
-      fOutput.write(" 0 0 0")
-    fOutput.write(" " + "0.0") # Transition energy is missing in online spreadsheet
-    fOutput.write(" 0.0 0.0 0.0") # Parent halflife is missing
+    # Find parent ID
+    c = 1
+    for k, j in enumerate(fLvlSpin):
+      if j == fOverwrite[fOverList[i]][7]:
+        if c == int(fOverwrite[fOverList[i]][8]):
+          fOutput.write(str(k))
+        c += 1
+    fOutput.write(" ")
+    # Find daughter ID
+    c = 1
+    for k, j in enumerate(fLvlSpin):
+      if j == fOverwrite[fOverList[i]][9]:
+        if c == int(fOverwrite[fOverList[i]][10]):
+          fOutput.write(str(k))
+        c += 1
+
     fOutput.write(" " + fOverwrite[fOverList[i]][11] + " " + fOverwrite[fOverList[i]][12] + " " + fOverwrite[fOverList[i]][13])
     fOutput.write(" " + fOverwrite[fOverList[i]][14] + " " + fOverwrite[fOverList[i]][15] + " " + fOverwrite[fOverList[i]][16])
     fOutput.write(" 0.0 0.0 0.0") # No mixing either
