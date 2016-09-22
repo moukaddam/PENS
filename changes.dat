@@ -1,0 +1,58 @@
+Below is a list of manual changes made directly to the downloaded ENSDF file,
+as it is better than making an if statement for these 1 or 2 inconsistencies.
+
+The downside being the changes must be made each time the files are downloaded.
+
+25Mg:
+  State [keV]: 8896
+  Issue: Mixing is -0.93 -44+33
+  Fix: -0.93 +33-44
+52V:
+  State [keV]: 22.764
+  Transition [keV]: 22.764
+  Issue: Comment (1966Va03) in line
+  Fix: Removed
+53Mn:
+  State [keV]: 2407.03
+  Transition [keV]: 2029.4
+  Issue: BM1W>0.0038 +22-10
+  Fix: BM1W=0.0038 +22-10
+79Sr:
+  State [keV]: 7993.5
+  Transition [keV]: 1525
+  Issue: BE2W>1.2E+2 +36-6
+  Fix: BE2W=1.2E+2 +36-6
+81Y:
+  State [keV]: 2373.91
+  Transition [keV]: 843.7
+  Issue: BE2W>100 +40-90
+  Fix: BE2W=100 +40-90
+88Sr:
+  State [keV]: 4845.62
+  Transition [keV]: 2111.47
+  Issue: Mixing error is +12-|@
+  Fix: Mixing error is +12-12
+128Te:
+  State [keV]: 2701.0
+  Transition [keV]: 567.67
+  Issue: Mixing error is -57+35
+  Fix: Mixing error is +35-57
+152Dy:
+  State [keV]: 3160.63
+  Transition [keV]: 254.5
+  Issue: BE2W LE 2.6 +7-5
+  Fix: BE2W=2.6 +7-5
+154Sm:
+  State [keV]: 1177.812
+  Transition [keV]: 1095.86
+  Issue: Mixing is +6E+1
+  Fix: Changed to +60
+180Os:
+  State [keV]: 767.478
+  Transition [keV]: 630.34
+  Issue: Mixing error is -17+23
+  Fix: Mixing error is +23-17
+207Ra:
+  State [keV]: 0
+  Issue: Half-life error is -13+22
+  Fix: Half-life error is +22-13

@@ -1,4 +1,4 @@
-import re, math, os, csv, requests, urllib2
+import re, math, os, csv, requests, urllib2, sys
 
 # PENS
 # ====
@@ -111,6 +111,9 @@ def gReturnB(fString):
   
 def gGetIndex(fFileName):
   # Split name into number and name
+  if gCheckNumber(fFileName[-1]):
+    print "INCORRECT FILE NAME", fFileName
+    sys.exit()
   sElement = fFileName.strip('0123456789')
   sMass = str(fFileName[:len(fFileName)-len(sElement)])
   if len(sMass) == 1:
@@ -202,13 +205,31 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
         fLvlSpinTent.append(sSpin)
         sCount = fLvlSpinTent.count(sSpin)
         fLvlCountTent.append(str(sCount))
+      elif any(sChar in sSpin for sChar in ["L", "G", "J", "NOT", ">", "AP"]):
+        fLvlSpin.append("-1")
+        fLvlCount.append("-1")
+        fLvlSpinTent.append("-1")
+        fLvlCountTent.append("-1")
       elif len(sSpin) != 0:
+        # The tentative spin assignments are essentially comments with little consistency
         sParity = ""
+        if "&" in sSpin:
+          sSpin = sSpin[0:sSpin.find("&")]
+        if "AND" in sSpin:
+          sSpin = sSpin[0:sSpin.find("A")]
+        if "OR" in sSpin:
+          sSpin = sSpin[0:sSpin.find("O")]
         if any(sChar in sSpin[-1] for sChar in ["+", "-"]):
           sParity = sSpin[-1]        
-        sSpin = sSpin.translate(None, '()')
+        sSpin = sSpin.translate(None, '()[]')
         if "," in sSpin:
           sSpin = sSpin[0:sSpin.find(",")] + sParity
+        if ":" in sSpin:
+          sSpin = sSpin[0:sSpin.find(":")] + sParity
+        if "TO" in sSpin:
+          sSpin = sSpin[0:sSpin.find("T")] + sParity
+        if "to" in sSpin:
+          sSpin = sSpin[0:sSpin.find("t")] + sParity
         fLvlSpinTent.append(sSpin)
         sCount = fLvlSpinTent.count(sSpin)
         fLvlCountTent.append(str(sCount))
@@ -216,7 +237,6 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
         fLvlSpin.append("-1")
         fLvlCount.append("-1")
       else:                                 #  If completly unknown, make -1
-        print sSpin
         fLvlSpin.append("-1")
         fLvlCount.append("-1")
         fLvlSpinTent.append("-1")
@@ -255,7 +275,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
         elif "AP" in fLine[49:55]:
           sList.append("0.0")
           sList.append("0.0")
-        elif fLine[49:55].strip():
+        elif gCheckNumber(fLine[49:55].strip()):
           sUpper, sLower = gMatchError(str(sLifeString[:-2].strip()), str(fLine[49:55].strip()), str(fLine[49:55].strip()))
           sList.append(str(float(sUpper)*sUnit))
           sList.append(str(float(sLower)*sUnit))
@@ -268,7 +288,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
     
     elif fLine[5:8] == "  G" and fGroundRead:           # Transition
     
-      if "X" in fLine[9:18] or "Y" in fLine[9:18]:
+      if not gCheckNumber(fLine[9:18]):
         continue
     
       # Encountering a new transition, write to vector the previous one
@@ -303,12 +323,12 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
       sTrsBranch = ["0.0", "0.0"]
        
       sTrsEnergy = float(fLine[9:18].strip())  
-      if len(fLine[22:26].strip()) != 0:
-        sTrsBranch = [fLine[22:26].strip(), "0.0"]
+      if len(fLine[22:29].strip()) != 0 and gCheckNumber(fLine[22:29].strip()):
+        sTrsBranch = [fLine[22:29].strip(), "0.0"]
         if len(fLine[29:31].strip()) != 0 and gCheckNumber(fLine[29:31].strip()):
           sBrErr = fLine[29:31].strip()
-          sA, sB = gMatchError(fLine[22:26].strip(), sBrErr, sBrErr)
-          sTrsBranch = [fLine[22:26].strip(), sA]
+          sA, sB = gMatchError(fLine[22:29].strip(), sBrErr, sBrErr)
+          sTrsBranch = [fLine[22:29].strip(), sA]
       sFinEnergy = min(fLvlEnergy, key=lambda x:abs(x-(fLvlEnergy[-1] - sTrsEnergy))) # Find final state
       sIndexDa = fLvlEnergy.index(sFinEnergy)
       sIndexPa = len(fLvlEnergy) - 1
@@ -321,6 +341,8 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
           sStr = "XX<"+re.sub(' +',' ',fLine[41:55].strip()[:-2])
         elif "AP" in fLine[41:55]:
           sStr = "XX="+re.sub(' +',' ',fLine[41:55].strip()[:-2])
+        elif "SY" in fLine[41:55]:
+          sStr = "XX="+fLine[41:55].translate(None, "SY")
         else:
           sStr = "XX="+re.sub(' +',' ',fLine[41:55].replace("+", " +").replace(" -", "-").strip()) # Gets rid of extra spaces
         sTrsMixing = gReturnB(sStr)
@@ -330,6 +352,8 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
       sLine = fLine[9:].strip()
       if sLine[-1] == ")" and sLine[-10] == "(": 
         sLine = sLine[:-10]                   # Delete reference
+      if "if" in sLine:
+        sLine = sLine[0:sLine.find("i")]
       if sLine.count("$") > 1:
         sLine = sLine[:gFindIter(sLine, "$", 2)]
       sLine = sLine.translate(None, '()BW?')
@@ -362,8 +386,12 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
           sString = fLine[fLine.index("=")+1:].strip()
         if " " in sString:
           sValue = sString[:sString.index(" ")]
-          sError = sString[sString.index(" "):]
-          sUpper, sLower = gMatchError(sValue, sError, sError)
+          sErrA = sString[sString.index(" "):]
+          sErrB = sErrA
+          if "+" in sErrA:
+            sErrA = sErrA[0:sErrA.find("-")]
+            sErrB = sErrA[sErrA.find("-"):]
+          sUpper, sLower = gMatchError(sValue, sErrA, sErrB)
         else:
           sValue = sString.strip()
           sUpper = 0.0
@@ -490,4 +518,5 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
     fOutput.write(" " + fOverwrite[fOverList[i]][22] + " " + fOverwrite[fOverList[i]][23])
     fOutput.write(" 0.0 0.0 0.0") # No alpha either
     fOutput.write("\n")
-  
+    
+fOutput.close()

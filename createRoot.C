@@ -100,7 +100,7 @@ int createRoot() {
         getline(inFile, inLine);
         inStream << inLine;
         vector <double> sLevel;
-        for (int j=0; j<7; j++) {
+        for (int j=0; j<10; j++) {
           inStream >> inValue;
           sLevel.push_back(inValue);          
         }
@@ -121,7 +121,7 @@ int createRoot() {
         getline(inFile, inLine);
         inStream << inLine;
         vector <double> sTrans;
-        for (int j=0; j<29; j++) {
+        for (int j=0; j<23; j++) {
           inStream >> inValue;
           sTrans.push_back(inValue);
         }
