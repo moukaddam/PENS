@@ -34,7 +34,6 @@ Follows the same rules as before, but tentative spins are included in the total 
 
 Where the index of the transitions corresponds to:
 
-3 1 0.8 2.0 14.9 2.4 4.2 0 0 0 +3.19 0.11 0.11 0.32 0.08 213 46 39 0.5 0.13 0.0 0.0 0.0
 
     [0] The index of the level vector from which the transition originates
     [1] The index, where the transition decays to
