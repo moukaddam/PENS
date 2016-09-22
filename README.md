@@ -37,7 +37,7 @@ Where the index of the transitions corresponds to:
 
     [0] The index of the level vector from which the transition originates
     [1] The index, where the transition decays to
-    [2], [3] Branching ratio (gamma) and the associated error NOTICED ERROR, UNRELIABLE TEMPORARILY
+    [2], [3] Branching ratio (gamma) and the associated error
     [4], [5], [6] B(E2) [W.u.] if available with value, upper, lower errors
     [7], [8], [9] B(M1) [W.u.] if available
     [10], [11], [12] Mixing ratio with upper, lower errors

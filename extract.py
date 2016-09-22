@@ -323,12 +323,12 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
       sTrsBranch = ["0.0", "0.0"]
        
       sTrsEnergy = float(fLine[9:18].strip())  
-      if len(fLine[22:29].strip()) != 0 and gCheckNumber(fLine[22:29].strip()):
-        sTrsBranch = [fLine[22:29].strip(), "0.0"]
+      if len(fLine[21:29].strip()) != 0 and gCheckNumber(fLine[21:29].strip()):
+        sTrsBranch = [fLine[21:29].strip(), "0.0"]
         if len(fLine[29:31].strip()) != 0 and gCheckNumber(fLine[29:31].strip()):
           sBrErr = fLine[29:31].strip()
-          sA, sB = gMatchError(fLine[22:29].strip(), sBrErr, sBrErr)
-          sTrsBranch = [fLine[22:29].strip(), sA]
+          sA, sB = gMatchError(fLine[21:29].strip(), sBrErr, sBrErr)
+          sTrsBranch = [fLine[21:29].strip(), sA]
       sFinEnergy = min(fLvlEnergy, key=lambda x:abs(x-(fLvlEnergy[-1] - sTrsEnergy))) # Find final state
       sIndexDa = fLvlEnergy.index(sFinEnergy)
       sIndexPa = len(fLvlEnergy) - 1
