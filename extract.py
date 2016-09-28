@@ -195,7 +195,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
         continue
       #print(repr(fLine[9:19]))
       fLvlEnergy.append(float(fLine[9:19])) # Energy, omitting error 
-      sSpin = fLine[21:36].strip()
+      sSpin = fLine[21:39].strip()
       # Check for definitive spin/parity assignment (must have + or -, and must be a number without either of those characters)
       if any(sChar in sSpin for sChar in ["+", "-"]) and gCheckNumber(sSpin.translate(None, '+-/')):
         fLvlSpin.append(sSpin)
@@ -433,7 +433,11 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
     if fLvlSpin[i] == "-1":
       fOutput.write(" " + fLvlSpin[i] + " " + sParity + " " + fLvlCount[i])
     else:
-      fOutput.write(" " + fLvlSpin[i].translate(None, '+-') + " " + sParity + " " + fLvlCount[i])
+      sRes = fLvlSpin[i]
+      if '/' in sRes:
+        sNum,sDen = fLvlSpin[i].translate(None, '+-').split( '/' )
+        sRes = str(float(sNum)/float(sDen))
+      fOutput.write(" " + sRes + " " + sParity + " " + fLvlCount[i])
     
     sParity = "0"
     if fLvlSpinTent[i][-1] == "+":
@@ -443,7 +447,11 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
     if fLvlSpinTent[i] == "-1":
       fOutput.write(" " + fLvlSpinTent[i] + " " + sParity + " " + fLvlCountTent[i])
     else:
-      fOutput.write(" " + fLvlSpinTent[i].translate(None, '+-') + " " + sParity + " " + fLvlCountTent[i])
+      sRes = fLvlSpinTent[i]
+      if '/' in sRes:
+        sNum,sDen = fLvlSpinTent[i].translate(None, '+-').split( '/' )
+        sRes = str(float(sNum)/float(sDen))
+      fOutput.write(" " + sRes + " " + sParity + " " + fLvlCountTent[i])
 
     fOutput.write(" " + fLvlHalflife[i][0] + " " + fLvlHalflife[i][1] + " " + fLvlHalflife[i][2] + "\n")
 
