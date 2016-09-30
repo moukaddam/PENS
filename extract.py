@@ -430,12 +430,13 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
       sParity = "1"
     elif fLvlSpin[i][-1] == "-":
       sParity = "-1"
+      
     if fLvlSpin[i] == "-1":
       fOutput.write(" " + fLvlSpin[i] + " " + sParity + " " + fLvlCount[i])
     else:
-      sRes = fLvlSpin[i]
+      sRes = fLvlSpin[i].translate(None, '+-')
       if '/' in sRes:
-        sNum,sDen = fLvlSpin[i].translate(None, '+-').split( '/' )
+        sNum,sDen = sRes.split( '/' )
         sRes = str(float(sNum)/float(sDen))
       fOutput.write(" " + sRes + " " + sParity + " " + fLvlCount[i])
     
@@ -447,9 +448,9 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
     if fLvlSpinTent[i] == "-1":
       fOutput.write(" " + fLvlSpinTent[i] + " " + sParity + " " + fLvlCountTent[i])
     else:
-      sRes = fLvlSpinTent[i]
+      sRes = fLvlSpinTent[i].translate(None, '+-')
       if '/' in sRes:
-        sNum,sDen = fLvlSpinTent[i].translate(None, '+-').split( '/' )
+        sNum,sDen = sRes.split( '/' )
         sRes = str(float(sNum)/float(sDen))
       fOutput.write(" " + sRes + " " + sParity + " " + fLvlCountTent[i])
 
