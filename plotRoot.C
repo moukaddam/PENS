@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <string>
 
 using namespace std;
@@ -23,10 +24,11 @@ int plotRoot() {
   TTreeReaderValue< int > tMass(fReader,"nMass");
   TTreeReaderValue< int > tProton(fReader, "nProton");
   TTreeReaderValue< int > tNeutron(fReader, "nNeutron");
-  TTreeReaderValue< double > tMoment(fReader, "nQuadrupole");
-  TTreeReaderArray< double > tDeformation(fReader, "nDeformation"); // [0] is value, [1] and [2] are upper and lower errors
+
   TTreeReaderArray< vector<double> > tLevels(fReader, "nLevels");
   TTreeReaderArray< vector<double> > tTrans(fReader, "nTransitions");
+  
+  ofstream outFile("out.dat");
 
   // .. loop through entries in tree, adding to vectors
   while (fReader.Next()) {
@@ -35,51 +37,70 @@ int plotRoot() {
     Double_t sProton = *tProton;
     Double_t sNeutron = *tNeutron;
     
-    Int_t sSize = tTrans.GetSize(); // Number of transitions
-        
-    for (int i=0; i<sSize; i++) {
-      Int_t sInitSpin = tTrans[i][0];
-      Int_t sInitParity = tTrans[i][1]; // + is +1, - is -1, tentative/unknown is 0
-      Int_t sInitCount = tTrans[i][2];  // nth state of Jpi.  tentative/unknown is 0
+    Int_t sTrsSize = tTrans.GetSize(); // Number of transitions
+    Int_t sLvlSize = tLevels.GetSize();
+    
+    //cout << "Reading " << sMass << " " << sProton << endl;
+    //cout << " with " << sLvlSize << " level(s) and " << sTrsSize << " transition(s)" << endl;
+                
+    for (int i=0; i<sTrsSize; i++) {
+    
+      // In the level vector:
+      // [0] - State energy (keV)
+      // [1], [2], [3] Confirmed spin, parity and Nth occurence
+      //   The spin is -1 if unknown/tentative. 
+      //   The parity is +1 for positive, -1 for negative, 0 for unknown/tentative. 
+      //   The count begins at 1, and is -1 if the state spin is unknown/tentative. 
+      //   For example, the second 2+ state will correspond to [1] = 2, [2] = +1, [3] = 2
+      // [4], [5], [6] As above, but including tentative assignments
+      // [7], [8], [9] Half-life in ps, with the upper and lower errors
+    
+      // In the transition vector:
+      // [0] - Parent ID of the level vector
+      // [1] - Daughter ID of the level vector
+      // [2], [3] Branching ratio (I_gamma) and the associated error
+      // [4], [5], [6], [7] B(E1) (W.u.) value, upper, lower error and confirmed flag
+      //   Flag is 1 if confirmed, 0 if tentative
+      // [8], [9], [10], [11] B(E2)
+      // [12], [13], [14], [15] B(E3)
+      // [16], [17], [18], [19] B(E4)
+      // [20], [21], [22], [23] B(M1)
+      // [24], [25], [26], [27] B(M2)
+      // [28], [29], [30], [31] B(M3)
+      // [32], [33], [34], [35] B(M4)    
+      // [36], [37], [38] Mixing ratio with upper, lower errors
+      // [39], [40] ICC with error
       
-      Int_t sFinalSpin = tTrans[i][3];
-      Int_t sFinalParity = tTrans[i][4]; // + is +1, - is -1, tentative/unknown is 0
-      Int_t sFinalCount = tTrans[i][5];
+      for (int j=0; j<sLvlSize; j++) 
+        double sE =  tLevels[j][0]; // Program crashes if you don't read through level vector prior
+    
+      Int_t sParent = (int)(tTrans[i][0]);
+      Double_t sParentSpin = tLevels[sParent][4];
+      Double_t sParentParity = tLevels[sParent][5];
+      Double_t sParentCount = tLevels[sParent][6];
       
-      Double_t sTranEnergy = tTrans[i][6]; // Transition Energy [keV]
+      Int_t sDaughter = (int)(tTrans[i][1]);
+      Double_t sDaughterSpin = tLevels[sDaughter][4];
+      Double_t sDaughterParity = tLevels[sDaughter][5];
+      Double_t sDaughterCount = tLevels[sDaughter][6];
       
-      Double_t sTransLife = tTrans[i][7]; // Parent Half-life [ps]
-      Double_t sTransLifeU = tTrans[i][8];
-      Double_t sTransLifeL = tTrans[i][9];
+      Double_t sTransEnergy = tLevels[sParent][0] - tLevels[sDaughter][0];
       
-      Double_t sTransBE2 = tTrans[i][10]; // B(E2) [W.u.]
-      Double_t sTransBE2u = tTrans[i][11];
-      Double_t sTransBE2l = tTrans[i][12];    
+      Double_t sHalflife = tLevels[sParent][7];
+      Double_t sMixing = tTrans[i][36];
+      Double_t sAlpha = tTrans[i][39];
       
-      Double_t sTransBM1 = tTrans[i][13]; // B(M1) [W.u.]
-      Double_t sTransBM1u = tTrans[i][14];
-      Double_t sTransBM1l = tTrans[i][15];    
+      if ((sParentSpin == sDaughterSpin) && (sParentParity == sDaughterParity) 
+          && (sHalflife != 0) && (sMixing != 0) && (sAlpha != 0)
+          && (sParentSpin == 2) && (sParentParity != 0)) {
+        outFile << sMass << "\t" << sProton << "\t"
+                << sTransEnergy << "\t" 
+                << sParentSpin << "\t" << sParentParity << "\t" << sParentCount << "\t"
+                << sDaughterSpin << "\t" << sDaughterParity << "\t" << sDaughterCount << "\t"
+                << sHalflife << "\t" << sMixing << "\t" << sAlpha << endl;
+      }
       
-      Double_t sTransMix = tTrans[i][16]; // Mixing Ratio
-      Double_t sTransMixu = tTrans[i][17];
-      Double_t sTransMixl = tTrans[i][18];    
-      
-      Double_t sTransQ2 = tTrans[i][19]; // q^2 (I(E0)/I(E2))
-      Double_t sTransQ2u = tTrans[i][20];
-      Double_t sTransQ2l = tTrans[i][20];    
-      
-      Double_t sTransRho = tTrans[i][21]; // rho^2 (E0) [milliunits]
-      Double_t sTransRhou = tTrans[i][22];
-      Double_t sTransRhol = tTrans[i][23];    
-      
-      Double_t sTransX = tTrans[i][24]; // X = B(E2)/B(E0)
-      Double_t sTransXu = tTrans[i][25];
-      Double_t sTransXl = tTrans[i][25];    
-      
-      Double_t sAlpha = tTrans[i][26];
-      Double_t sAlphau = tTrans[i][27];
-      Double_t sAlphal = tTrans[i][28];
-
+/*
       if (sTransBE2 != 0 && sNeutron==34 && sInitSpin == 2 && sFinalSpin==2) {  //  This is where you would define conditions
         fX.push_back(sMass);
         fXU.push_back(0.);
@@ -89,35 +110,13 @@ int plotRoot() {
         fYU.push_back(sAlphau);
         fYL.push_back(sAlphal);
       }
+      */
     }
-    /*
-    Int_t sSize = tLevels.GetSize(); // Number of levels
-    for (int i=0; i<sSize; i++) {
-    
-      Double_t sLevelEnergy = tLevels[i][0];  // Energy Level [keV]
-      
-      Int_t sLevelSpin = tLevels[i][0];   // Spin
-      Int_t sLevelParity = tLevels[i][1]; // + is +1, - is -1, tentative/unknown is 0
-      Int_t sLevelCount = tLevels[i][2];  // nth state of Jpi.  tentative/unknown is 0
-      
-      Double_t sTransLife = tTrans[i][4]; // Half-life [ps]
-      Double_t sTransLifeU = tTrans[i][5]; // upper error
-      Double_t sTransLifeL = tTrans[i][6]; // lower error
-      
-      if (sNeutron==34 && sLevelSpin==2 && sLevelCount==2) {  //  This is where you would define conditions
-        fX.push_back(sMass);
-        fXU.push_back(0.);
-        fXL.push_back(0.);
-        
-        fY.push_back(sLevelEnergy);
-        fYU.push_back(0.);
-        fYL.push_back(0.);
-      }
-    
-    }
-    */
-  }
 
+  }
+  
+  outFile.close();
+/*
   // Draw Plot
   Int_t fSize = fX.size();
   TGraphAsymmErrors *fPlot = new TGraphAsymmErrors(fSize, &fX[0], &fY[0], &fXL[0], &fXU[0], &fYL[0], &fYU[0]);
@@ -127,6 +126,6 @@ int plotRoot() {
   fPlot->SetMarkerStyle(kCircle);
   fPlot->SetMarkerSize(0.5);
   fPlot->Draw("AP");
-
+*/
   return 0;
 }

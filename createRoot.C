@@ -15,27 +15,18 @@ class cNucleus {
   public:
  
     int nMass, nProton, nNeutron;
-    double nQuadrupole;
-    // [0] = value, [1] = value+upper error, [2] = value-lower error
-    vector <double> nDeformation;
     vector < vector <double >> nLevels;
     vector < vector <double >> nTransitions;
        
     void SetMass(int sMass) {nMass = sMass;}
     void SetProton(int sProton) {nProton = sProton;}
     void SetNeutron(int sNeutron) {nNeutron = sNeutron;}
-    void SetDeformation(Double_t sValue, Double_t sUpper, Double_t sLower) {
-      nDeformation.push_back(sValue);
-      nDeformation.push_back(sUpper);
-      nDeformation.push_back(sLower);
-    }
-    void SetQuadrupole(double sQuad) {nQuadrupole = sQuad;}
+
     
     void PushLevel(vector <double> sLevel) {nLevels.push_back(sLevel);}
     void PushTrans(vector <double> sTrans) {nTransitions.push_back(sTrans);}
     
     void Clear(){
-      nDeformation.clear();
       nLevels.clear();
       nTransitions.clear();
     };
@@ -47,7 +38,7 @@ int createRoot() {
 
   // Variable declaration
   // .. input file variables
-  double inValue, inA, inZ, inN, inB, inBu, inBl, inQ;
+  double inValue, inA, inZ, inN;
   
   // Create root file and tree
   TFile fRootFile("pensExtract.root","RECREATE");
@@ -74,7 +65,7 @@ int createRoot() {
     if (inLine == "#N") {
       getline(inFile, inLine);
       inStream << inLine;
-      inStream >> inA >> inZ >> inN >> inB >> inBu >> inBl >> inQ;
+      inStream >> inA >> inZ >> inN;
       cout << fCounter ++ << "\t" << inA << "\t" << inZ << endl;
       
       fNucleus->Clear(); 
@@ -83,8 +74,6 @@ int createRoot() {
       fNucleus->SetProton(inZ);
       fNucleus->SetNeutron(inN);
              
-      fNucleus->SetDeformation(inB, inBu, inBl);
-      fNucleus->SetQuadrupole(inQ);
       inStream << "";
       inStream.clear();
     
@@ -100,7 +89,7 @@ int createRoot() {
         getline(inFile, inLine);
         inStream << inLine;
         vector <double> sLevel;
-        for (int j=0; j<7; j++) {
+        for (int j=0; j<10; j++) {
           inStream >> inValue;
           sLevel.push_back(inValue);          
         }
@@ -121,7 +110,7 @@ int createRoot() {
         getline(inFile, inLine);
         inStream << inLine;
         vector <double> sTrans;
-        for (int j=0; j<29; j++) {
+        for (int j=0; j<41; j++) {
           inStream >> inValue;
           sTrans.push_back(inValue);
         }
