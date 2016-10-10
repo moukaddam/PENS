@@ -121,6 +121,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
   
   # .. then the level information
   fOutput.write("#L\n")
+  fOutput.write("%d\n" % (len(fLvlEnergy)))
   for i in range(0, len(fLvlEnergy)): # Loop over ith element in array, rather than element itself 
     fOutput.write("%d" % (fLvlEnergy[i]))
     fOutput.write(" %s %s %s %s" % (fLvlSpin[i][0], fLvlSpin[i][1], fLvlSpin[i][2], fLvlSpin[i][3]))
@@ -128,6 +129,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
 
   # .. then the transition information
   fOutput.write("#T\n")
+  fOutput.write("%d\n" % (len(fTrsIndex)))
   for i in range(0, len(fTrsIndex)):
     fOutput.write("%s %s" % (fTrsIndex[i][0], fTrsIndex[i][1]) )
     fOutput.write(" %s %s %s" % (fTrsBranch[i][0], fTrsBranch[i][1], fTrsBranch[i][2]) )
