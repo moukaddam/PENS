@@ -40,10 +40,6 @@ Where the index of the transitions corresponds to:
     [9], [10], [11], [12] B(E2) [W.u.], as above
     [13], , , [16] B(E3) [W.u.], as above
     [17], , , [20] B(E4) [W.u.], as above
-    [5], [6], [7], [8] B(E1) [W.u.] and errors.  Fourth element is a flag for confirmed (1 if confirmed)
-    [9], [10], [11], [12] B(E2) [W.u.], as above
-    [13], , , [16] B(E3) [W.u.], as above
-    [17], , , [20] B(E4) [W.u.], as above
     [21] -- [36] B(ML) [W.u.], as above
     [37], [38], [39] Mixing ratio with upper, lower errors
     [40], [41]
