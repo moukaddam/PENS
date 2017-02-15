@@ -15,13 +15,15 @@ class cNucleus {
   public:
  
     int nMass, nProton, nNeutron;
+    double nS2n, nS2nErr;
     vector < vector <double >> nLevels;
     vector < vector <double >> nTransitions;
        
     void SetMass(int sMass) {nMass = sMass;}
     void SetProton(int sProton) {nProton = sProton;}
     void SetNeutron(int sNeutron) {nNeutron = sNeutron;}
-
+    void SetS2n(double sS2n) {nS2n = sS2n;}
+    void SetS2nErr(double sS2nErr) {nS2nErr = sS2nErr;}
     
     void PushLevel(vector <double> sLevel) {nLevels.push_back(sLevel);}
     void PushTrans(vector <double> sTrans) {nTransitions.push_back(sTrans);}
@@ -38,7 +40,7 @@ int createRoot() {
 
   // Variable declaration
   // .. input file variables
-  double inValue, inA, inZ, inN;
+  double inValue, inA, inZ, inN, inS2n, inS2nE;
   
   // Create root file and tree
   TFile fRootFile("pensExtract.root","RECREATE");
@@ -65,7 +67,7 @@ int createRoot() {
     if (inLine == "#N") {
       getline(inFile, inLine);
       inStream << inLine;
-      inStream >> inA >> inZ >> inN;
+      inStream >> inA >> inZ >> inN >> inS2n >> inS2nE;
       cout << fCounter ++ << "\t" << inA << "\t" << inZ << endl;
       
       fNucleus->Clear(); 
@@ -73,6 +75,8 @@ int createRoot() {
       fNucleus->SetMass(inA);
       fNucleus->SetProton(inZ);
       fNucleus->SetNeutron(inN);
+      fNucleus->SetS2n(inS2n);
+      fNucleus->SetS2nErr(inS2nE);
              
       inStream << "";
       inStream.clear();

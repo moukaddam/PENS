@@ -2,18 +2,19 @@ import re, math, os, csv, requests, urllib2, sys
 from functions import *
 
 # Import google csv in to overwrite list
-#print "Reading in from online spreadsheet..."
-#try:
-#  fCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
-#  fInput = urllib2.urlopen(fCSVURL)
-#  fReader = csv.reader(fInput)
-#  fOverwrite = list(fReader)
-#  print "... SUCCESS!"
-#  print "... Read in", len(fOverwrite), "lines"
-#except urllib2.URLError:
-#  print "... FAILURE!"
+fExternal = []
+print "Reading in from online spreadsheet..."
+try:
+  sCSVURL = 'https://docs.google.com/spreadsheet/ccc?key=178pS1nT7PEsmTwCdeJViEfrO2up3cMdzOgL7vO2Gyuk&output=csv'
+  sInput = urllib2.urlopen(sCSVURL)
+  sReader = csv.reader(sInput)
+  fExternal = list(sReader)
+  print "... SUCCESS!"
+  print "... Read in", len(fExternal), "lines"
+except urllib2.URLError:
+  print "... FAILURE!"
 #print "Ignore spreadsheet..."
-#fOverwrite = []
+
 
 # In turn, open each file within the data folder
 fOutput = open('collate.dat', 'w') 
@@ -36,12 +37,38 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
   nucMass = int(fInput.read(3))
   nucName = fInput.read(2)
   nucProton = gReturnProton(nucName.strip())
+  nucS2n = [0., 0.]
+  
+  # At this point, let's extract the nuclides transitions from the external db into smaller list
+  fOverwrite = [x for x in fExternal if gMatchMass(str(nucMass), str(nucProton), x)]
+  #print fOverwrite
+  
+  
   
   print "Reading in", nucMass, nucName, nucProton
   
   # Read through each line in the file
   for fLine in fInput:
   
+    if fLine[5:8] == " cQ":
+      # Again, very little consistency in ENSDF files on a comment line, so I need to make >15 lines of code to read S(2n)
+      if "S(2n)=" in fLine and not "theo" in fLine and not "|" in fLine:
+        sPos = fLine.find("S(2n)=")
+        sEnd = fLine.find("(",sPos+4)
+        if (sEnd < 0):
+          sEnd = len(fLine)
+        if (fLine.find(",",sPos) < sEnd and fLine.find(",",sPos) > 0):
+          sEnd = fLine.find(",",sPos)
+        if (fLine.find(";",sPos) < sEnd and fLine.find(";",sPos) > 0):
+          sEnd = fLine.find(";",sPos)
+        if (fLine.find("}",sPos) < sEnd and fLine.find("}",sPos) > 0):
+          sEnd = fLine.find("}",sPos)
+        sArray = fLine[sPos+6:sEnd].replace("syst", "").replace("{I", "").replace("{i", "").replace("  ", " ").split()
+        sError = 0
+        if (len(sArray)>1):
+          sError, sNull = gMatchError(sArray[0], sArray[1], sArray[1])
+        nucS2n = [float(sArray[0]), float(sError)]
+          
     if fLine[5:8] == "  L":                 # Level 
     
       sEnergy = fLine[9:19].strip()             # Energy (keV)
@@ -117,7 +144,8 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
   
   # Write the nuclear data first
   fOutput.write("#N\n")
-  fOutput.write("%d %d %d\n" % (nucMass, nucProton, nucMass-nucProton))
+  fOutput.write("%d %d %d" % (nucMass, nucProton, nucMass-nucProton))
+  fOutput.write(" %f %f\n" % (nucS2n[0], nucS2n[1]))
   
   # .. then the level information
   fOutput.write("#L\n")
