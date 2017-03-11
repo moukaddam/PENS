@@ -45,7 +45,8 @@ Where the index of the transitions corresponds to:
     [29], , , [32] B(M3) [W.u.], as above
     [33], , , [36] B(M4) [W.u.], as above
     [37], [38], [39] Mixing ratio with upper, lower errors
-    [40], [41]
+    [40], [41] Alpha
+    [42], [43], [44] E0 Strength [milli-units]
 
 A number of these properties are not obtained through ENSDF, but via a Google Spreadsheet used as an injector/override if necessary.  This includes mostly the deformation and E0 related properties.
 
@@ -53,7 +54,7 @@ A number of these properties are not obtained through ENSDF, but via a Google Sp
 ## A note on errors
 If a quantity has 3 elements, such as the B(E2) values, the first is the value and the following two are the upper and lower respectively.  
 
-If the error is a "less than", then the upper error = 0 and lower error = value.  
-If the error is a "greater than", then the upper error = value and lower error = 0.  
+If the error is an upper limit, then the upper error = 0 and lower error = value.  
+If the error is a lower limit, then the upper error = value and lower error = 0.  
 
 This is made this way for the purpose of if conditions later on.

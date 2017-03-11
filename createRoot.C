@@ -114,7 +114,7 @@ int createRoot() {
         getline(inFile, inLine);
         inStream << inLine;
         vector <double> sTrans;
-        for (int j=0; j<42; j++) {
+        for (int j=0; j<45; j++) {
           inStream >> inValue;
           sTrans.push_back(inValue);
         }

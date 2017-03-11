@@ -29,6 +29,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
   fTrsMixing = [] # Str 3 ele
   fTrsAlpha = []  # Str 2
   fTrsB = []      # Str 32
+  fTrsRho = []    # Str 3
   
   fGroundRead = False
 
@@ -108,6 +109,7 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
       
       sBranch = fLine[21:29].strip()            # Branching ratio
       sTrsBranch = ["0", "0", "0"]
+      fTrsRho.append(sTrsBranch)
       if sBranch:
         sTrsBranch = gProcessBranch(sBranch, fLine[29:31].strip())
       fTrsBranch.append(sTrsBranch)
@@ -139,6 +141,65 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
         sys.exit()
       fTrsB[len(fTrsIndex) - 1] = sTrsB
   
+  # TODO Clean up this section of code, written in a hurry
+  # Now we need to inject the external spreadsheet information into existing arrays
+  for fT in fOverwrite:
+    sParEnergy = float(fT[6])
+    # Find the parent energy
+    sParLoc, sParVal = min(enumerate(fLvlEnergy), key=lambda x: abs(x[1]-sParEnergy))
+    sBool = False
+    if abs(sParVal - sParEnergy) > 1.0: # Energy level not found, inject level
+      sBool = True
+      fLvlEnergy.append(sParEnergy)
+      sLvlSpin = [fT[8], fT[9], fT[8], fT[9]]
+      fLvlSpin.append(sLvlSpin)
+      sLvlLife = ["0", "0", "0"]
+      fLvlLife.append(sLvlLife)
+    # Find the transition
+    sDauEnergy = float(fT[7]) - sParEnergy
+    sDauLoc, sDauVal = min(enumerate(fLvlEnergy), key=lambda x: abs(x[1]-sDauEnergy))
+    # Find the transition in the transition list
+    sTrsLoc = -1
+    for i in range(0, len(fTrsIndex)):
+      if fTrsIndex[i][0] == sParLoc and fTrsIndex[i][1] == sDauLoc:
+        sTrsLoc = i
+        break
+    if sTrsLoc == -1:
+      sBool = True
+    
+    if sBool: # If added in level, then transition doesn't exist prior either
+      sParLoc, sParVal = min(enumerate(fLvlEnergy), key=lambda x: abs(x[1]-sParEnergy))
+      sTrsIndex = [str(sParLoc), str(sDauLoc)]
+      fTrsIndex.append(sTrsIndex)
+      sTrsBranch = ["100", "0", "0"]
+      fTrsBranch.append(sTrsBranch)
+      sTrsB = []
+      while len(sTrsB) < 32:
+        sTrsB.append("0") 
+      if fT[14]:
+        sTrsB[4] = fT[14]
+        sTrsB[5] = fT[15]
+        sTrsB[6] = fT[16]
+        sTrsB[7] = "1"
+      fTrsB.append(sTrsB)
+      fTrsMixing.append(sTrsBranch)
+      sTrsAlpha = ["0", "0"]
+      fTrsAlpha.append(sTrsAlpha)
+      if fT[17]:
+        sTrsBranch = [fT[17], fT[18], fT[19]]
+      fTrsRho.append(sTrsBranch)
+    else: # Need to replace the values of an existing transition
+      if fT[14]:
+        fTrsB[sTrsLoc][4] = fT[14]
+        fTrsB[sTrsLoc][5] = fT[15]
+        fTrsB[sTrsLoc][6] = fT[16]
+        fTrsB[sTrsLoc][7] = "1"
+      if fT[17]:
+        fTrsRho[sTrsLoc][0] = fT[17]
+        fTrsRho[sTrsLoc][1] = fT[18]
+        fTrsRho[sTrsLoc][2] = fT[19]
+  
+  
   print " ... ", len(fLvlEnergy), " states and ", len(fTrsB), " transitions"
   fInput.close()
   
@@ -164,7 +225,8 @@ for i in sorted(os.listdir(os.getcwd() + "/data"), key=gGetIndex):
     for eachEntry in fTrsB[i]:
       fOutput.write(" " + eachEntry)
     fOutput.write(" %s %s %s" % (fTrsMixing[i][0], fTrsMixing[i][1], fTrsMixing[i][2]) )
-    fOutput.write(" %s %s\n" % (fTrsAlpha[i][0], fTrsAlpha[i][1]) )
+    fOutput.write(" %s %s" % (fTrsAlpha[i][0], fTrsAlpha[i][1]) )
+    fOutput.write(" %s %s %s\n" % (fTrsRho[i][0], fTrsRho[i][1], fTrsRho[i][2]) )
 
 
 fOutput.close()
